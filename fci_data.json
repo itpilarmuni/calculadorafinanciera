@@ -1,0 +1,12 @@
+[
+ {
+   "nombre": "Banco Provincia FCI",
+   "logo": "imagenes/PCIA.jpg",
+   "rendimiento_mensual_estimado_pct": 2.32
+ },
+ {
+   "nombre": "ICBC Alpha FCI",
+   "logo": "imagenes/LOGO-ICBC-VERTICAL-copy-01-1.png",
+   "rendimiento_mensual_estimado_pct": 2.12
+ }
+]

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Inversiones</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculadora de Inversiones</h1>
+        <p id="last-updated">Cargando fecha de actualización de tasas...</p>
+
+        <div class="input-section">
+            <label for="monto">Monto a invertir (ARS):</label>
+            <input type="number" id="monto" step="1000" placeholder="Ingrese monto"> <label for="dias">Cantidad de días:</label>
+            <input type="number" id="dias" value="30" step="1">
+        </div>
+
+        <div class="fci-options-section">
+            <input type="checkbox" id="interesSimpleFciCheckbox">
+            <label for="interesSimpleFciCheckbox">Usar Interés Simple para FCI (por defecto es Compuesto)</label>
+        </div>
+
+        <div class="input-section" style="justify-content: center; padding-top: 10px;"> <button id="calcularBtn">Calcular Rendimientos</button>
+        </div>
+
+
+        <div class="results-section">
+            <h2>Resultados de Plazos Fijos</h2>
+            <table id="resultadosPf">
+                <thead>
+                    <tr>
+                        <th>Entidad Financiera</th>
+                        <th>TNA (%)</th>
+                        <th>Interés Ganado (ARS)</th>
+                        <th>Capital + Interés (ARS)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+
+            <h2>Resultados de Fondos Comunes de Inversión (FCI)</h2>
+            <table id="resultadosFci">
+                <thead>
+                    <tr>
+                        <th>Logo</th>
+                        <th>Fondo Común de Inversión</th>
+                        <th>Rend. Mensual Est. (%)</th>
+                        <th>Interés Ganado (ARS)</th>
+                        <th>Capital + Interés (ARS)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="chart-section">
+            <h2>Comparativa de Rendimiento Total</h2>
+            <canvas id="rendimientoChart"></canvas>
+            <div id="resumenGananciasChart" class="resumen-ganancias-style">
+                <h3>Detalle de Ganancias:</h3>
+                </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
