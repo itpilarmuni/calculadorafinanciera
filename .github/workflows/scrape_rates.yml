@@ -25,7 +25,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run scraper
-        run: python scraper.py
+        run: python "PRUEBA SCRAP.py"
 
       - name: Commit and push if data changed
         run: |
