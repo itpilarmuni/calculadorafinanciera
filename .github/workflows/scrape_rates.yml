@@ -3,13 +3,15 @@ name: Scrape BCRA Rates Daily
 on:
   schedule:
     # Corre todos los días a las 10:00 AM hora Argentina (ART, UTC-3)
-    # Esto es 13:00 UTC
+    # Esto es 13:00 UTC. Ajusta el cron si necesitas otra hora.
     - cron: '0 13 * * *'
   workflow_dispatch: # Permite ejecutarlo manualmente desde la pestaña Actions de GitHub
 
 jobs:
-  scrape:
+  scrape_and_commit:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Necesario para que el workflow pueda hacer commit al repositorio
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,33 +19,26 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10' # Puedes usar una versión más reciente si lo deseas
+          python-version: '3.10' # O la versión de Python que usa tu script
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run scraper
-        run: python "PRUEBA SCRAP.py"
+      - name: Run scraper to generate tasas_bancos.json
+        # ESTA ES LA LÍNEA CLAVE: Asegúrate que el nombre del archivo es EXACTO
+        run: python "PRUEBA SCRAP.py" 
 
       - name: Commit and push if data changed
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          # Añadir el archivo JSON de tasas. Si scraper.py no pudo generar el archivo,
-          # este comando podría fallar si el archivo no existe.
-          # El script scraper.py ahora crea un json vacío en caso de error de scraping.
-          git add tasas_bancos.json
-          # Comprobar si hay cambios para commitear
+          git add tasas_bancos.json # El archivo que tu script "PRUEBA SCRAP.py" genera
           if git diff --staged --quiet; then
-            echo "No changes to commit."
+            echo "No changes to tasas_bancos.json to commit."
           else
             git commit -m "บอท: Actualización diaria de tasas de Plazos Fijos BCRA"
-            # Forzar push para simplificar, asumiendo que este bot es el único que actualiza este archivo.
-            # Considerar estrategias más complejas si hay otros commits concurrentes.
             git push
-            echo "Tasas actualizadas y subidas al repositorio."
+            echo "tasas_bancos.json actualizado y subido al repositorio."
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Token provisto por GitHub Actions
