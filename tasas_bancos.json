@@ -1,5 +1,5 @@
 {
-    "ultima_actualizacion": "2025-06-05T13:34:39.141926+00:00",
+    "ultima_actualizacion": "2025-06-06T13:33:37.866146+00:00",
     "tasas": [
         {
             "banco": "BANCO DE LA NACION ARGENTINA",
@@ -19,7 +19,7 @@
         },
         {
             "banco": "BANCO BBVA ARGENTINA S.A.",
-            "tna": 30.0
+            "tna": 29.5
         }
     ]
 }
