@@ -24,18 +24,13 @@
                 <input type="number" id="monto" placeholder="Ej: 100000" step="1000">
             </div>
 
-            <div class="input-group">
-                <label for="dias">Cantidad de Días</label>
-                <input type="number" id="dias" value="30" step="1">
-            </div>
-
             <div class="checkbox-group">
                 <input type="checkbox" id="interesSimpleFciCheckbox">
                 <label for="interesSimpleFciCheckbox">Usar Interés Simple para FCI</label>
             </div>
             
             <button id="calcularBtn" class="cta-button">
-                <i class="fas fa-calculator"></i> Calcular Rendimientos
+                <i class="fas fa-calculator"></i> Calcular Rendimientos a 30 días
             </button>
             <p id="last-updated">Cargando datos...</p>
         </section>
@@ -54,7 +49,7 @@
             </div>
 
             <div class="tab-content active" id="tab-resumen">
-                <h3 class="tab-title">Comparativa de Rendimiento Total</h3>
+                <h3 class="tab-title">Comparativa de Rendimiento Total (a 30 días)</h3>
                 <div class="chart-container">
                     <canvas id="rendimientoChart"></canvas>
                 </div>
@@ -64,7 +59,7 @@
             </div>
 
             <div class="tab-content" id="tab-pf">
-                <h3 class="tab-title">Detalle de Plazos Fijos</h3>
+                <h3 class="tab-title">Detalle de Plazos Fijos (Orden de Menor a Mayor Ganancia)</h3>
                 <div class="table-container">
                     <table id="resultadosPf">
                         <thead>
@@ -82,7 +77,7 @@
             </div>
 
             <div class="tab-content" id="tab-fci">
-                <h3 class="tab-title">Detalle de Fondos Comunes de Inversión</h3>
+                <h3 class="tab-title">Detalle de Fondos Comunes de Inversión (Orden de Menor a Mayor Ganancia)</h3>
                  <div class="table-container">
                     <table id="resultadosFci">
                         <thead>
