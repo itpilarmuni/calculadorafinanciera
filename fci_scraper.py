@@ -1,106 +1,107 @@
+
 import requests
-import pandas as pd
 import json
-import io
 
-# URL de descarga directa de la planilla diaria de CAFCI
-# Este enlace descarga el archivo Excel completo.
-URL_CAFCI_EXCEL = "https://api.cafci.org.ar/pb_get"
+# URL de la API de CAFCI para obtener todos los fondos activos con sus datos
+URL_API_CAFCI = "https://api.cafci.org.ar/fondo?estado=1&limit=0&include=clase_fondo,ultima_ficha"
 
-# Nombres de los fondos que nos interesan, tal como aparecen en el Excel
+# Nombres de las "clases" de los fondos que nos interesan.
+# Usamos el nombre de la clase, que es el identificador único en la API.
 FONDOS_DE_INTERES = {
-    "1810 Renta Mixta A": "Banco Provincia FCI",
-    "Alpha Renta Mixta A": "ICBC Alpha FCI"
+    "1810 Renta Mixta - Clase A": "Banco Provincia FCI",
+    "Alpha Renta Mixta - Clase A": "ICBC Alpha FCI"
 }
 
-def fetch_and_process_fci_excel():
+def fetch_fci_data_from_api():
     """
-    Descarga el archivo Excel de CAFCI, lo lee con pandas,
-    y extrae los datos de los fondos de interés.
+    Obtiene los datos de todos los FCI desde la API de CAFCI.
     """
-    print(f"[FCI Scraper Excel] Descargando planilla desde: {URL_CAFCI_EXCEL}")
+    print(f"[FCI Scraper API] Obteniendo datos desde: {URL_API_CAFCI}")
     try:
-        # Hacemos la solicitud GET para descargar el archivo
-        response = requests.get(URL_CAFCI_EXCEL, timeout=60, headers={'User-Agent': 'Mozilla/5.0'})
+        response = requests.get(URL_API_CAFCI, timeout=60, headers={'User-Agent': 'Mozilla/5.0'})
         response.raise_for_status()
-        print("[FCI Scraper Excel] Planilla descargada exitosamente.")
+        return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"[FCI Scraper Excel] Error al descargar el archivo de CAFCI: {e}")
+        print(f"[FCI Scraper API] Error al conectar con la API de CAFCI: {e}")
+        return None
+    except json.JSONDecodeError:
+        print("[FCI Scraper API] Error: La respuesta de la API no es un JSON válido.")
         return None
 
-    try:
-        # Leemos el contenido del Excel directamente en pandas sin guardarlo en disco.
-        # 'io.BytesIO' permite a pandas leer el contenido binario del Excel.
-        # 'header=7' indica que los encabezados de la tabla comienzan en la fila 8 del Excel.
-        df = pd.read_excel(io.BytesIO(response.content), header=7)
-        
-        # Opcional: Imprimir las primeras filas para depuración en los logs de GitHub Actions
-        # print("------------------- INICIO DE TABLA EXCEL -------------------")
-        # print(df.head().to_string())
-        # print("-------------------- FIN DE TABLA EXCEL --------------------")
-        
-    except Exception as e:
-        print(f"[FCI Scraper Excel] Error al leer el archivo Excel con pandas: {e}")
-        return None
-
-    # Nombres de las columnas que necesitamos del Excel
-    col_fondo = 'Fondo'
-    col_rend_mes = 'Rend. del Mes %'
-
-    if col_fondo not in df.columns or col_rend_mes not in df.columns:
-        print(f"[FCI Scraper Excel] Error: No se encontraron las columnas esperadas ('{col_fondo}', '{col_rend_mes}').")
-        print("Columnas disponibles:", df.columns.tolist())
+def find_funds_and_extract_performance(api_data):
+    """
+    Busca los fondos de interés en la respuesta de la API y extrae su rendimiento mensual.
+    """
+    if not api_data or 'data' not in api_data:
+        print("[FCI Scraper API] La respuesta de la API no contiene la sección 'data' esperada.")
         return None
 
     resultados_fci = []
     
-    for nombre_cafci, nombre_app in FONDOS_DE_INTERES.items():
-        # Buscar la fila exacta que coincida con el nombre del fondo
-        fila_fondo = df[df[col_fondo] == nombre_cafci]
-        
-        if not fila_fondo.empty:
-            # iloc[0] toma la primera (y única) fila encontrada
-            rendimiento_obj = fila_fondo.iloc[0][col_rend_mes]
-            try:
-                # El valor puede ser numérico directamente o un string, nos aseguramos
-                rendimiento_pct = float(rendimiento_obj)
-                
-                print(f"[FCI Scraper Excel] ÉXITO: Encontrado '{nombre_app}' con Rendimiento Mensual = {rendimiento_pct}%")
+    # Creamos un diccionario para buscar fondos por el nombre de su clase fácilmente
+    funds_by_class_name = {
+        clase['nombre']: fondo
+        for fondo in api_data['data']
+        for clase in fondo.get('clase_fondos', [])
+    }
 
-                logo_path = ""
-                if "Provincia" in nombre_app:
-                    logo_path = "imagenes/PCIA.jpg"
-                elif "ICBC" in nombre_app:
-                    logo_path = "imagenes/LOGO-ICBC-VERTICAL-copy-01-1.png"
+    for nombre_clase_cafci, nombre_app in FONDOS_DE_INTERES.items():
+        if nombre_clase_cafci in funds_by_class_name:
+            fondo_encontrado = funds_by_class_name[nombre_clase_cafci]
+            
+            # La API provee rendimientos en la sección 'ultima_ficha'. Buscamos el mensual.
+            if 'ultima_ficha' in fondo_encontrado and fondo_encontrado['ultima_ficha']:
+                rendimientos = fondo_encontrado['ultima_ficha'].get('rendimientos', {})
+                # El rendimiento mensual viene en la clave 'mes'
+                rendimiento_mensual_str = rendimientos.get('mes')
 
-                resultados_fci.append({
-                    "nombre": nombre_app,
-                    "logo": logo_path,
-                    "rendimiento_mensual_estimado_pct": rendimiento_pct
-                })
-            except (ValueError, TypeError) as e:
-                print(f"[FCI Scraper Excel] ERROR al convertir el rendimiento '{rendimiento_obj}' para '{nombre_app}'. Error: {e}")
+                if rendimiento_mensual_str is not None:
+                    try:
+                        rendimiento_pct = float(rendimiento_mensual_str)
+                        print(f"[FCI Scraper API] ÉXITO: Encontrado '{nombre_app}' con Rendimiento Mensual = {rendimiento_pct}%")
+
+                        logo_path = ""
+                        if "Provincia" in nombre_app:
+                            logo_path = "imagenes/PCIA.jpg"
+                        elif "ICBC" in nombre_app:
+                            logo_path = "imagenes/LOGO-ICBC-VERTICAL-copy-01-1.png"
+
+                        resultados_fci.append({
+                            "nombre": nombre_app,
+                            "logo": logo_path,
+                            "rendimiento_mensual_estimado_pct": rendimiento_pct
+                        })
+                    except (ValueError, TypeError) as e:
+                        print(f"[FCI Scraper API] ERROR al convertir el rendimiento '{rendimiento_mensual_str}' para '{nombre_app}'. Error: {e}")
+                else:
+                    print(f"[FCI Scraper API] ADVERTENCIA: No se encontró el rendimiento mensual ('mes') para '{nombre_app}'.")
+            else:
+                print(f"[FCI Scraper API] ADVERTENCIA: El fondo '{nombre_app}' no tiene una 'ultima_ficha' con datos de rendimiento.")
         else:
-            print(f"[FCI Scraper Excel] ADVERTENCIA: No se encontró el fondo '{nombre_cafci}' en el Excel.")
-
+            print(f"[FCI Scraper API] ADVERTENCIA: No se encontró la clase de fondo '{nombre_clase_cafci}' en los datos de la API.")
+            
     return resultados_fci
 
 def save_to_json(data, filename="fci_data.json"):
     """ Guarda los datos en un archivo JSON. """
     if not data:
-        print("[FCI Scraper Excel] No se encontraron datos de FCI para guardar. No se modificará el archivo JSON.")
+        print("[FCI Scraper API] No se encontraron datos de FCI para guardar. No se modificará el archivo JSON.")
         return
 
     try:
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"[FCI Scraper Excel] Datos de FCI guardados exitosamente en: {filename}")
+        print(f"[FCI Scraper API] Datos de FCI guardados exitosamente en: {filename}")
     except Exception as e:
-        print(f"[FCI Scraper Excel] Error al guardar el archivo JSON: {e}")
+        print(f"[FCI Scraper API] Error al guardar el archivo JSON: {e}")
 
 if __name__ == "__main__":
-    datos_fci_actualizados = fetch_and_process_fci_excel()
-    if datos_fci_actualizados:
-        save_to_json(datos_fci_actualizados)
+    api_response_data = fetch_fci_data_from_api()
+    if api_response_data:
+        datos_fci_actualizados = find_funds_and_extract_performance(api_response_data)
+        if datos_fci_actualizados:
+            save_to_json(datos_fci_actualizados)
+        else:
+            print("[FCI Scraper API] No se pudo extraer la información de los fondos de interés.")
     else:
-        print("[FCI Scraper Excel] El scraping de FCI falló o no encontró datos relevantes. El archivo fci_data.json no fue modificado.")
+        print("[FCI Scraper API] El scraping de FCI falló.")
