@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Referencias a Elementos del DOM ---
     const montoInput = document.getElementById('monto');
+    const diasInput = document.getElementById('dias');
     const calcularBtn = document.getElementById('calcularBtn');
     const resultadosPfBody = document.getElementById('resultadosPf')?.getElementsByTagName('tbody')[0];
     const resultadosFciBody = document.getElementById('resultadosFci')?.getElementsByTagName('tbody')[0];
@@ -9,20 +10,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const interesSimpleFciCheckbox = document.getElementById('interesSimpleFciCheckbox');
     const resumenGananciasDiv = document.getElementById('resumenGananciasChart');
     
-    // Lógica de Pestañas
+    // ***** LÓGICA DE PESTAÑAS *****
     const tabLinks = document.querySelectorAll('.tab-link');
     const tabContents = document.querySelectorAll('.tab-content');
 
     tabLinks.forEach(link => {
         link.addEventListener('click', () => {
+            // Quitar clase 'active' de todos los links y contenidos
             tabLinks.forEach(l => l.classList.remove('active'));
             tabContents.forEach(c => c.classList.remove('active'));
+
+            // Añadir clase 'active' al link clickeado y al contenido correspondiente
             const tabId = link.getAttribute('data-tab');
             const tabContent = document.getElementById(tabId);
+            
             link.classList.add('active');
-            if (tabContent) tabContent.classList.add('active');
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
         });
     });
+    // ***** FIN DE LÓGICA DE PESTAÑAS *****
 
     let rendimientoGeneralChartInstance;
     let tasasBancosData = null;
@@ -52,20 +60,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function calcularYMostrarResultados() {
-        if (!montoInput.value) {
-            alert("Por favor, ingrese un Monto a invertir.");
+        if (!montoInput.value || !diasInput.value) {
+            alert("Por favor, ingrese Monto a invertir y Cantidad de días.");
             return;
         }
         if (!tasasBancosData || !fciData) {
-            alert("Los datos aún no están cargados. Por favor, espere o recargue.");
+            alert("Los datos de tasas o FCI aún no están cargados. Por favor, espere o recargue.");
             return;
         }
 
         const monto = parseFloat(montoInput.value);
-        const dias = 30; // Plazo fijado en 30 días
+        const dias = parseInt(diasInput.value);
 
-        if (isNaN(monto) || monto <= 0) {
-            alert("Por favor, ingrese un monto válido y mayor a cero.");
+        if (isNaN(monto) || monto <= 0 || isNaN(dias) || dias <= 0) {
+            alert("Por favor, ingrese un monto y días válidos y mayores a cero.");
             return;
         }
 
@@ -77,8 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
             rendimientoGeneralChartInstance.destroy();
         }
 
-        const resultadosPF = [];
-        const resultadosFCI = [];
+        const resultadosCompletos = [];
 
         // Calcular Plazos Fijos
         if (tasasBancosData.tasas && tasasBancosData.tasas.length > 0) {
@@ -87,10 +94,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const interesGanado = monto * (tna / 100 / 365) * dias;
                 const capitalMasInteres = monto + interesGanado;
                 
-                resultadosPF.push({
-                    nombre: banco.banco, tna: tna,
-                    interesGanado: interesGanado, capitalMasInteres: capitalMasInteres, tipo: 'PF'
-                });
+                if (resultadosPfBody) {
+                    const row = resultadosPfBody.insertRow();
+                    row.insertCell().textContent = banco.banco;
+                    row.insertCell().textContent = tna.toFixed(2);
+                    row.insertCell().textContent = interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+                    row.insertCell().textContent = capitalMasInteres.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+                }
+                resultadosCompletos.push({nombre: banco.banco, valorFinal: capitalMasInteres, interesGanado: interesGanado, tipo: 'PF'});
             });
         }
 
@@ -109,51 +120,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     interesGanado = monto * (Math.pow(1 + rendimientoDiarioDecimal, dias) - 1);
                     capitalMasInteres = monto * Math.pow(1 + rendimientoDiarioDecimal, dias);
                 }
-                
-                resultadosFCI.push({
-                    nombre: fci.nombre, logo: fci.logo, rendimientoMensualPct: rendimientoMensualPct,
-                    interesGanado: interesGanado, capitalMasInteres: capitalMasInteres, tipo: 'FCI'
-                });
+
+                if (resultadosFciBody) {
+                    const row = resultadosFciBody.insertRow();
+                    const logoCell = row.insertCell();
+                    if (fci.logo) {
+                        const img = document.createElement('img');
+                        img.src = fci.logo; img.alt = fci.nombre;
+                        img.onerror = function() { this.style.display='none'; logoCell.textContent = '-'; };
+                        logoCell.appendChild(img);
+                    } else { logoCell.textContent = '-'; }
+                    row.insertCell().textContent = fci.nombre;
+                    row.insertCell().textContent = rendimientoMensualPct.toFixed(2);
+                    row.insertCell().textContent = interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+                    row.insertCell().textContent = capitalMasInteres.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+                }
+                resultadosCompletos.push({nombre: fci.nombre, valorFinal: capitalMasInteres, interesGanado: interesGanado, tipo: 'FCI'});
             });
         }
         
-        // Ordenar de MENOR a MAYOR ganancia para las tablas
-        resultadosPF.sort((a, b) => a.interesGanado - b.interesGanado);
-        resultadosFCI.sort((a, b) => a.interesGanado - b.interesGanado);
-
-        // Poblar las tablas con los datos ordenados
-        resultadosPF.forEach(res => {
-            if (resultadosPfBody) {
-                const row = resultadosPfBody.insertRow();
-                row.insertCell().textContent = res.nombre;
-                row.insertCell().textContent = res.tna.toFixed(2);
-                row.insertCell().textContent = res.interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-                row.insertCell().textContent = res.capitalMasInteres.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-            }
-        });
-
-        resultadosFCI.forEach(res => {
-            if (resultadosFciBody) {
-                const row = resultadosFciBody.insertRow();
-                const logoCell = row.insertCell();
-                if (res.logo) {
-                    const img = document.createElement('img');
-                    img.src = res.logo; img.alt = res.nombre;
-                    img.onerror = function() { this.style.display='none'; logoCell.textContent = '-'; };
-                    logoCell.appendChild(img);
-                } else { logoCell.textContent = '-'; }
-                row.insertCell().textContent = res.nombre;
-                row.insertCell().textContent = res.rendimientoMensualPct.toFixed(2);
-                row.insertCell().textContent = res.interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-                row.insertCell().textContent = res.capitalMasInteres.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-            }
-        });
-        
-        // Unir todos los resultados para el gráfico y el resumen general
-        const resultadosCompletos = [...resultadosPF, ...resultadosFCI];
         actualizarGraficoGeneralYResumen(resultadosCompletos, monto);
     }
-    
+
     function actualizarGraficoGeneralYResumen(resultados, montoBase) {
         if (!rendimientoChartCanvasElement) return;
         const ctxGeneral = rendimientoChartCanvasElement.getContext('2d');
@@ -163,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultados.sort((a, b) => b.interesGanado - a.interesGanado);
 
         const labels = resultados.map(r => r.nombre);
-        const dataValoresFinales = resultados.map(r => r.capitalMasInteres);
+        const dataValoresFinales = resultados.map(r => r.valorFinal);
         const backgroundColors = resultados.map(r => r.tipo === 'PF' ? '#36a2eb' : '#2ecc71');
         const borderColors = resultados.map(r => r.tipo === 'PF' ? '#36a2eb' : '#2ecc71');
 
@@ -184,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: false, min: montoBase },
+                    y: { beginAtZero: false, min: montoBase * 0.98 },
                     x: { ticks: { font: { family: "'Poppins', sans-serif" } } }
                 },
                 plugins: {
