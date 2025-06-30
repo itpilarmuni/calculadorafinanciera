@@ -6,11 +6,10 @@ import io
 # URL de descarga directa de la planilla diaria de CAFCI
 URL_CAFCI_EXCEL = "https://api.cafci.org.ar/pb_get"
 
-# ===== CORRECCIÓN CLAVE: Usamos textos más cortos y únicos para la búsqueda =====
-# En lugar de buscar el nombre completo, buscamos una parte única que no cambia.
+# ===== CORRECCIÓN FINAL AQUÍ: Nombres actualizados para la búsqueda =====
 FONDOS_DE_INTERES = {
-    "1810 Renta Mixta": "Banco Provincia FCI",      # Buscamos solo "1810 Renta Mixta"
-    "Alpha Renta Mixta": "ICBC Alpha FCI"           # Buscamos solo "Alpha Renta Mixta"
+    "1810 Renta Mixta": "Banco Provincia FCI",      
+    "ALPHA AHORRO": "ICBC Alpha FCI"  # Actualizado al nombre correcto
 }
 
 def fetch_and_process_fci_excel():
@@ -36,20 +35,18 @@ def fetch_and_process_fci_excel():
     col_fondo = 'Fondo'
     if col_fondo not in df.columns:
         print(f"[FCI Scraper Excel] Error: No se encontró la columna '{col_fondo}'.")
-        print("Columnas disponibles:", df.columns.tolist())
         return None
 
     resultados_fci = []
     
     for texto_a_buscar, nombre_app in FONDOS_DE_INTERES.items():
-        # ===== MÉTODO DE BÚSQUEDA CORREGIDO Y MÁS ROBUSTO =====
-        # Usamos .str.contains() que busca si el texto está contenido, ignorando mayúsculas/minúsculas.
+        # Usamos .str.contains() para buscar si el texto está contenido, ignorando mayúsculas/minúsculas.
         fila_fondo = df[df[col_fondo].str.contains(texto_a_buscar, case=False, na=False)]
         
         if not fila_fondo.empty:
-            # Imprimimos la fila encontrada para depuración
-            print(f"[FCI Scraper Excel] ÉXITO: Se encontró una coincidencia para '{texto_a_buscar}':")
-            print(fila_fondo[[col_fondo]].to_string())
+            # Imprimimos el nombre completo encontrado para verificar
+            nombre_encontrado = fila_fondo.iloc[0][col_fondo]
+            print(f"[FCI Scraper Excel] ÉXITO: Coincidencia para '{texto_a_buscar}' encontrada en: '{nombre_encontrado}'")
 
             # Como el Excel no tiene el rendimiento mensual directo, usamos los valores que ya verificamos.
             if "Provincia" in nombre_app:
