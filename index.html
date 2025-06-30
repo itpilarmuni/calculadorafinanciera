@@ -3,222 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Inversiones</title>
+    <title>Dashboard Financiero | Calculadora de Inversiones</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;400&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            background: linear-gradient(120deg, #00c6ff 0%, #0072ff 100%);
-            font-family: 'Roboto', 'Montserrat', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            color: #232946;
-        }
-        .container {
-            max-width: 900px;
-            margin: 48px auto;
-            background: rgba(255,255,255,0.95);
-            border-radius: 22px;
-            box-shadow: 0 8px 40px rgba(0, 114, 255, 0.18);
-            padding: 40px 32px 32px 32px;
-            position: relative;
-            overflow: hidden;
-        }
-        h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 2.6rem;
-            color: #0072ff;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
-        }
-        h2 {
-            color: #00c6ff;
-            font-family: 'Montserrat', sans-serif;
-            margin-top: 32px;
-        }
-        .input-section, .fci-options-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 18px;
-            align-items: center;
-            margin-bottom: 18px;
-        }
-        .input-section label, .fci-options-section label {
-            font-weight: 500;
-        }
-        input[type="number"] {
-            padding: 10px 14px;
-            border: 2px solid #00c6ff;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            width: 170px;
-            transition: border 0.2s, box-shadow 0.2s;
-            box-shadow: 0 2px 8px rgba(0,198,255,0.07);
-        }
-        input[type="number"]:focus {
-            border: 2px solid #0072ff;
-            outline: none;
-            box-shadow: 0 0 0 2px #00c6ff44;
-        }
-        button#calcularBtn {
-            background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            padding: 14px 38px;
-            font-size: 1.15rem;
-            font-weight: 700;
-            font-family: 'Montserrat', sans-serif;
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(0, 114, 255, 0.13);
-            transition: background 0.2s, transform 0.1s;
-            letter-spacing: 1px;
-        }
-        button#calcularBtn:hover {
-            background: linear-gradient(90deg, #0072ff 0%, #00c6ff 100%);
-            transform: translateY(-2px) scale(1.04);
-        }
-        .results-section {
-            margin-top: 32px;
-        }
-        .results-section table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 32px;
-            background: #e3f0ff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 1px 8px rgba(0, 114, 255, 0.08);
-        }
-        .results-section th, .results-section td {
-            padding: 13px 10px;
-            text-align: center;
-        }
-        .results-section th {
-            background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
-            color: #fff;
-            font-weight: 700;
-            font-size: 1.08rem;
-        }
-        .results-section tr:nth-child(even) {
-            background: #f0f7ff;
-        }
-        .results-section tr:nth-child(odd) {
-            background: #e3f0ff;
-        }
-        .chart-section {
-            margin-top: 36px;
-            background: #f0f7ff;
-            border-radius: 14px;
-            padding: 28px 18px;
-            box-shadow: 0 1px 8px rgba(0, 114, 255, 0.08);
-        }
-        #rendimientoChart {
-            max-width: 100%;
-            height: 340px;
-        }
-        .resumen-ganancias-style {
-            margin-top: 18px;
-            background: #00c6ff22;
-            border-radius: 10px;
-            padding: 16px 20px;
-            color: #232946;
-            font-size: 1.08rem;
-        }
-        #last-updated {
-            font-size: 1.01rem;
-            color: #0072ff;
-            margin-bottom: 18px;
-            font-style: italic;
-        }
-        @media (max-width: 700px) {
-            .container {
-                padding: 16px 2vw;
-            }
-            .input-section, .fci-options-section {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            input[type="number"] {
-                width: 100%;
-            }
-            .results-section table, .chart-section {
-                font-size: 0.99rem;
-            }
-        }
-        /* Animación de fondo sutil */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: -1;
-            background: radial-gradient(circle at 80% 20%, #00c6ff33 0%, transparent 60%),
-                        radial-gradient(circle at 20% 80%, #0072ff22 0%, transparent 60%);
-            animation: fondoAnimado 8s linear infinite alternate;
-        }
-        @keyframes fondoAnimado {
-            0% { filter: blur(0px); }
-            100% { filter: blur(2px); }
-        }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Calculadora de Inversiones</h1>
-        <p id="last-updated">Cargando fecha de actualización de tasas...</p>
-        <div class="input-section">
-            <label for="monto">Monto a invertir (ARS):</label>
-            <input type="number" id="monto" step="1000" placeholder="Ingrese monto">
-            <label for="dias">Cantidad de días:</label>
-            <input type="number" id="dias" value="30" step="1">
-        </div>
-        <div class="fci-options-section">
-            <input type="checkbox" id="interesSimpleFciCheckbox">
-            <label for="interesSimpleFciCheckbox">Usar Interés Simple para FCI (por defecto es Compuesto)</label>
-        </div>
-        <div class="input-section" style="justify-content: center; padding-top: 10px;">
-            <button id="calcularBtn">Calcular Rendimientos</button>
-        </div>
-        <div class="results-section">
-            <h2>Resultados de Plazos Fijos</h2>
-            <table id="resultadosPf">
-                <thead>
-                    <tr>
-                        <th>Entidad Financiera</th>
-                        <th>TNA (%)</th>
-                        <th>Interés Ganado (ARS)</th>
-                        <th>Capital + Interés (ARS)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Resultados de plazos fijos -->
-                </tbody>
-            </table>
-            <h2>Resultados de Fondos Comunes de Inversión (FCI)</h2>
-            <table id="resultadosFci">
-                <thead>
-                    <tr>
-                        <th>Logo</th>
-                        <th>Fondo Común de Inversión</th>
-                        <th>Rend. Mensual Est. (%)</th>
-                        <th>Interés Ganado (ARS)</th>
-                        <th>Capital + Interés (ARS)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Resultados de FCI -->
-                </tbody>
-            </table>
-        </div>
-        <div class="chart-section">
-            <h2>Comparativa de Rendimiento Total</h2>
-            <canvas id="rendimientoChart"></canvas>
-            <div id="resumenGananciasChart" class="resumen-ganancias-style">
-                <h3>Detalle de Ganancias:</h3>
+
+    <main class="dashboard">
+        <section class="card settings-card">
+            <h2 class="card-title"><i class="fas fa-sliders-h"></i> Configuración</h2>
+            
+            <div class="input-group">
+                <label for="monto">Monto a Invertir (ARS)</label>
+                <input type="number" id="monto" placeholder="Ej: 100000" step="1000">
             </div>
-        </div>
-    </div>
+
+            <div class="input-group">
+                <label for="dias">Cantidad de Días</label>
+                <input type="number" id="dias" value="30" step="1">
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="interesSimpleFciCheckbox">
+                <label for="interesSimpleFciCheckbox">Usar Interés Simple para FCI</label>
+            </div>
+            
+            <button id="calcularBtn" class="cta-button">
+                <i class="fas fa-calculator"></i> Calcular Rendimientos
+            </button>
+            <p id="last-updated">Cargando datos...</p>
+        </section>
+
+        <section class="card results-card">
+            <div class="tabs">
+                <button class="tab-link active" data-tab="tab-resumen">
+                    <i class="fas fa-chart-pie"></i> Resumen General
+                </button>
+                <button class="tab-link" data-tab="tab-pf">
+                    <i class="fas fa-university"></i> Plazos Fijos
+                </button>
+                <button class="tab-link" data-tab="tab-fci">
+                    <i class="fas fa-money-bill-wave"></i> FCI
+                </button>
+            </div>
+
+            <div class="tab-content active" id="tab-resumen">
+                <h3 class="tab-title">Comparativa de Rendimiento Total</h3>
+                <div class="chart-container">
+                    <canvas id="rendimientoChart"></canvas>
+                </div>
+                <div id="resumenGananciasChart" class="resumen-ganancias-style">
+                    <h4><i class="fas fa-hand-holding-usd"></i> Detalle de Ganancias</h4>
+                    </div>
+            </div>
+
+            <div class="tab-content" id="tab-pf">
+                <h3 class="tab-title">Detalle de Plazos Fijos</h3>
+                <div class="table-container">
+                    <table id="resultadosPf">
+                        <thead>
+                            <tr>
+                                <th>Entidad Financiera</th>
+                                <th>TNA (%)</th>
+                                <th>Interés Ganado</th>
+                                <th>Capital + Interés</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-fci">
+                <h3 class="tab-title">Detalle de Fondos Comunes de Inversión</h3>
+                 <div class="table-container">
+                    <table id="resultadosFci">
+                        <thead>
+                            <tr>
+                                <th>Logo</th>
+                                <th>Fondo</th>
+                                <th>Rend. Mensual Est. (%)</th>
+                                <th>Interés Ganado</th>
+                                <th>Capital + Interés</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
