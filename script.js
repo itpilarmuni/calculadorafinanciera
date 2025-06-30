@@ -9,13 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const rendimientoChartCanvasElement = document.getElementById('rendimientoChart');
     const interesSimpleFciCheckbox = document.getElementById('interesSimpleFciCheckbox');
     const resumenGananciasDiv = document.getElementById('resumenGananciasChart');
-
+    
     // ***** LÓGICA DE PESTAÑAS *****
     const tabLinks = document.querySelectorAll('.tab-link');
     const tabContents = document.querySelectorAll('.tab-content');
 
+    console.log("Script para Dashboard cargado. Encontrados", tabLinks.length, "botones de pestaña.");
+
     tabLinks.forEach(link => {
         link.addEventListener('click', () => {
+            console.log("Botón de pestaña clickeado:", link.getAttribute('data-tab')); // Log para depuración
+
             // Quitar clase 'active' de todos los links y contenidos
             tabLinks.forEach(l => l.classList.remove('active'));
             tabContents.forEach(c => c.classList.remove('active'));
@@ -27,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
             link.classList.add('active');
             if (tabContent) {
                 tabContent.classList.add('active');
+            } else {
+                console.error("No se encontró el contenido de la pestaña con ID:", tabId);
             }
         });
     });
