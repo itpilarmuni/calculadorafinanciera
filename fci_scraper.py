@@ -6,10 +6,11 @@ import io
 # URL de descarga directa de la planilla diaria de CAFCI
 URL_CAFCI_EXCEL = "https://api.cafci.org.ar/pb_get"
 
-# ===== CORRECCIÓN AQUÍ: Nombres exactos como aparecen en el Excel =====
+# ===== CORRECCIÓN CLAVE: Usamos textos más cortos y únicos para la búsqueda =====
+# En lugar de buscar el nombre completo, buscamos una parte única que no cambia.
 FONDOS_DE_INTERES = {
-    "1810 RENTA MIXTA - CLASE A": "Banco Provincia FCI",
-    "ALPHA RENTA MIXTA - CLASE A": "ICBC Alpha FCI"
+    "1810 Renta Mixta": "Banco Provincia FCI",      # Buscamos solo "1810 Renta Mixta"
+    "Alpha Renta Mixta": "ICBC Alpha FCI"           # Buscamos solo "Alpha Renta Mixta"
 }
 
 def fetch_and_process_fci_excel():
@@ -33,9 +34,6 @@ def fetch_and_process_fci_excel():
         return None
 
     col_fondo = 'Fondo'
-    # La columna 'Rend. del Mes %' no existe, así que no intentamos leerla.
-    # El script usará los valores fijos que definimos abajo.
-
     if col_fondo not in df.columns:
         print(f"[FCI Scraper Excel] Error: No se encontró la columna '{col_fondo}'.")
         print("Columnas disponibles:", df.columns.tolist())
@@ -43,15 +41,17 @@ def fetch_and_process_fci_excel():
 
     resultados_fci = []
     
-    for nombre_cafci, nombre_app in FONDOS_DE_INTERES.items():
-        # Buscamos la fila que coincida EXACTAMENTE con el nombre.
-        fila_fondo = df[df[col_fondo] == nombre_cafci]
+    for texto_a_buscar, nombre_app in FONDOS_DE_INTERES.items():
+        # ===== MÉTODO DE BÚSQUEDA CORREGIDO Y MÁS ROBUSTO =====
+        # Usamos .str.contains() que busca si el texto está contenido, ignorando mayúsculas/minúsculas.
+        fila_fondo = df[df[col_fondo].str.contains(texto_a_buscar, case=False, na=False)]
         
         if not fila_fondo.empty:
-            print(f"[FCI Scraper Excel] ÉXITO: Se encontró la fila para '{nombre_app}'.")
-            
-            # Como el Excel no tiene el rendimiento mensual, usamos los valores que ya verificamos.
-            # Esto asegura que la aplicación siempre tenga un dato funcional.
+            # Imprimimos la fila encontrada para depuración
+            print(f"[FCI Scraper Excel] ÉXITO: Se encontró una coincidencia para '{texto_a_buscar}':")
+            print(fila_fondo[[col_fondo]].to_string())
+
+            # Como el Excel no tiene el rendimiento mensual directo, usamos los valores que ya verificamos.
             if "Provincia" in nombre_app:
                 rendimiento_final = 2.45
                 logo_path = "imagenes/PCIA.jpg"
@@ -70,7 +70,7 @@ def fetch_and_process_fci_excel():
                 "rendimiento_mensual_estimado_pct": rendimiento_final
             })
         else:
-            print(f"[FCI Scraper Excel] ADVERTENCIA: No se encontró el fondo '{nombre_cafci}' en el Excel.")
+            print(f"[FCI Scraper Excel] ADVERTENCIA: No se encontró ningún fondo que contenga el texto '{texto_a_buscar}' en el Excel.")
 
     return resultados_fci
 
