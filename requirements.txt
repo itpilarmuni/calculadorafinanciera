@@ -1,6 +1,5 @@
 requests
 beautifulsoup4
+lxml
 pandas
-lxml 
-# pandas no es estrictamente necesario para la versión JSON, pero tu script original lo usaba.
-# lxml es un parser para BeautifulSoup.
+openpyxl
