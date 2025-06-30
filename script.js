@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Referencias a Elementos del DOM ---
     const montoInput = document.getElementById('monto');
-    // const diasInput = document.getElementById('dias'); // Ya no se necesita
+    // El input de días ya no se usa
     const calcularBtn = document.getElementById('calcularBtn');
     const resultadosPfBody = document.getElementById('resultadosPf')?.getElementsByTagName('tbody')[0];
     const resultadosFciBody = document.getElementById('resultadosFci')?.getElementsByTagName('tbody')[0];
@@ -31,11 +31,33 @@ document.addEventListener('DOMContentLoaded', () => {
     let tasasBancosData = null;
     let fciData = null;
 
-    async function cargarDatos() { /* ... (Sin cambios) ... */ }
+    async function cargarDatos() {
+        console.log("Cargando datos iniciales...");
+        try {
+            const versionCache = new Date().getTime();
+            const responseTasas = await fetch('tasas_bancos.json?v=' + versionCache, { cache: 'no-store' });
+            if (!responseTasas.ok) throw new Error(`Error cargando tasas_bancos.json`);
+            tasasBancosData = await responseTasas.json();
+            
+            const responseFci = await fetch('fci_data.json?v=' + versionCache, { cache: 'no-store' });
+            if (!responseFci.ok) throw new Error(`Error cargando fci_data.json`);
+            fciData = await responseFci.json();
+
+            if (tasasBancosData && tasasBancosData.ultima_actualizacion && lastUpdatedP) {
+                const fechaActualizacion = new Date(tasasBancosData.ultima_actualizacion);
+                lastUpdatedP.textContent = `Tasas actualizadas: ${fechaActualizacion.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}`;
+            } else if (lastUpdatedP) {
+                lastUpdatedP.textContent = "Datos listos para calcular.";
+            }
+        } catch (error) {
+            console.error("Error en cargarDatos:", error);
+            if (lastUpdatedP) lastUpdatedP.textContent = `Error al cargar datos.`;
+        }
+    }
 
     function calcularYMostrarResultados() {
-        console.log("Calculando...");
-        if (!montoInput.value) { // Solo se necesita el monto ahora
+        console.log("Calculando resultados para 30 días...");
+        if (!montoInput.value) { // Solo verificamos el monto
             alert("Por favor, ingrese un Monto a invertir.");
             return;
         }
@@ -45,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const monto = parseFloat(montoInput.value);
-        const dias = 30; // CAMBIO: Días fijado en 30
+        const dias = 30; // Días fijado en 30
 
         if (isNaN(monto) || monto <= 0) {
             alert("Por favor, ingrese un monto válido y mayor a cero.");
@@ -107,12 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // --- CAMBIO: Ordenar resultados para las tablas ---
-        // Ordenar de MENOR a MAYOR ganancia
+        // Ordenar de MENOR a MAYOR ganancia para las tablas de detalle
         resultadosPF.sort((a, b) => a.interesGanado - b.interesGanado);
         resultadosFCI.sort((a, b) => a.interesGanado - b.interesGanado);
 
-        // --- Poblar las tablas con los datos ya ordenados ---
+        // Poblar las tablas con los datos ya ordenados
         resultadosPF.forEach(res => {
             if (resultadosPfBody) {
                 const row = resultadosPfBody.insertRow();
@@ -146,16 +167,12 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Cálculos y visualización actualizados.");
     }
     
-    // El resto de las funciones (cargarDatos, actualizarGraficoGeneralYResumen, etc.) se mantienen igual que en la versión anterior.
-    // ... (pegar aquí el resto del script.js, desde la función actualizarGraficoGeneralYResumen hasta el final)
-    
-    // Función para actualizar gráfico y resumen (sin cambios, excepto el orden de los datos que recibe)
     function actualizarGraficoGeneralYResumen(resultados, montoBase) {
         if (!rendimientoChartCanvasElement) return;
         const ctxGeneral = rendimientoChartCanvasElement.getContext('2d');
         if (!ctxGeneral) return;
 
-        // Para el gráfico y el resumen general, mantenemos el orden de MAYOR a MENOR
+        // Para el gráfico y el resumen general, mantenemos el orden de MAYOR a MENOR ganancia
         resultados.sort((a, b) => b.interesGanado - a.interesGanado);
 
         const labels = resultados.map(r => r.nombre);
@@ -180,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: false, min: montoBase },
+                    y: { beginAtZero: false, min: montoBase * 0.98 },
                     x: { ticks: { font: { family: "'Poppins', sans-serif" } } }
                 },
                 plugins: {
@@ -200,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (resumenGananciasDiv) {
+            // Usamos los mismos datos ordenados de mayor a menor para el resumen
             resultados.forEach(resultado => {
                 const p = document.createElement('p');
                 const gananciaFormateada = resultado.interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
@@ -208,36 +226,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
-    
-    // Carga de datos inicial (sin cambios)
-    async function cargarDatos() {
-        console.log("Cargando datos iniciales...");
-        try {
-            const versionCache = new Date().getTime();
-            const responseTasas = await fetch('tasas_bancos.json?v=' + versionCache, { cache: 'no-store' });
-            if (!responseTasas.ok) throw new Error(`Error cargando tasas_bancos.json`);
-            tasasBancosData = await responseTasas.json();
-            
-            const responseFci = await fetch('fci_data.json?v=' + versionCache, { cache: 'no-store' });
-            if (!responseFci.ok) throw new Error(`Error cargando fci_data.json`);
-            fciData = await responseFci.json();
 
-            if (tasasBancosData && tasasBancosData.ultima_actualizacion && lastUpdatedP) {
-                const fechaActualizacion = new Date(tasasBancosData.ultima_actualizacion);
-                lastUpdatedP.textContent = `Tasas actualizadas: ${fechaActualizacion.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}`;
-            } else if (lastUpdatedP) {
-                lastUpdatedP.textContent = "Datos listos para calcular.";
-            }
-        } catch (error) {
-            console.error("Error en cargarDatos:", error);
-            if (lastUpdatedP) lastUpdatedP.textContent = `Error al cargar datos.`;
-        }
-    }
-
-    // Event Listeners
+    // --- EVENT LISTENERS ---
     if (calcularBtn) {
         calcularBtn.addEventListener('click', calcularYMostrarResultados);
     }
     
+    // Cargar datos al iniciar la página
     cargarDatos();
 });
