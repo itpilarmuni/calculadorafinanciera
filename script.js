@@ -9,33 +9,59 @@ document.addEventListener('DOMContentLoaded', () => {
     const rendimientoChartCanvasElement = document.getElementById('rendimientoChart');
     const interesSimpleFciCheckbox = document.getElementById('interesSimpleFciCheckbox');
     const resumenGananciasDiv = document.getElementById('resumenGananciasChart');
-    
-    // Lógica de Pestañas
+
+    // ***** LÓGICA DE PESTAÑAS *****
     const tabLinks = document.querySelectorAll('.tab-link');
     const tabContents = document.querySelectorAll('.tab-content');
+
+    tabLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            // Quitar clase 'active' de todos los links y contenidos
+            tabLinks.forEach(l => l.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+
+            // Añadir clase 'active' al link clickeado y al contenido correspondiente
+            const tabId = link.getAttribute('data-tab');
+            const tabContent = document.getElementById(tabId);
+            
+            link.classList.add('active');
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
+        });
+    });
+    // ***** FIN DE LÓGICA DE PESTAÑAS *****
 
     let rendimientoGeneralChartInstance;
     let tasasBancosData = null;
     let fciData = null;
 
-    // --- LÓGICA DE PESTAÑAS ---
-    tabLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            // Quitar clase 'active' de todos
-            tabLinks.forEach(l => l.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
+    async function cargarDatos() {
+        console.log("Cargando datos iniciales...");
+        try {
+            const versionCache = new Date().getTime();
+            const fetchConfig = { cache: 'no-store' };
 
-            // Añadir 'active' al link y contenido clickeado
-            const tabId = link.getAttribute('data-tab');
-            const tabContent = document.getElementById(tabId);
+            const responseTasas = await fetch('tasas_bancos.json?v=' + versionCache, fetchConfig);
+            if (!responseTasas.ok) throw new Error(`Error cargando tasas_bancos.json`);
+            tasasBancosData = await responseTasas.json();
             
-            link.classList.add('active');
-            tabContent.classList.add('active');
-        });
-    });
+            const responseFci = await fetch('fci_data.json?v=' + versionCache, fetchConfig);
+            if (!responseFci.ok) throw new Error(`Error cargando fci_data.json`);
+            fciData = await responseFci.json();
 
+            if (tasasBancosData && tasasBancosData.ultima_actualizacion && lastUpdatedP) {
+                const fechaActualizacion = new Date(tasasBancosData.ultima_actualizacion);
+                lastUpdatedP.textContent = `Tasas actualizadas: ${fechaActualizacion.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}`;
+            } else if (lastUpdatedP) {
+                lastUpdatedP.textContent = "Datos listos para calcular.";
+            }
+        } catch (error) {
+            console.error("Error en cargarDatos:", error);
+            if (lastUpdatedP) lastUpdatedP.textContent = `Error al cargar datos.`;
+        }
+    }
 
-    // --- FUNCIÓN PRINCIPAL DE CÁLCULO ---
     function calcularYMostrarResultados() {
         console.log("Calculando...");
         if (!montoInput.value || !diasInput.value) {
@@ -121,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Cálculos y visualización actualizados.");
     }
 
-    // --- FUNCIÓN PARA ACTUALIZAR GRÁFICO Y RESUMEN ---
     function actualizarGraficoGeneralYResumen(resultados, montoBase) {
         if (!rendimientoChartCanvasElement) return;
         const ctxGeneral = rendimientoChartCanvasElement.getContext('2d');
@@ -131,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const labels = resultados.map(r => r.nombre);
         const dataValoresFinales = resultados.map(r => r.valorFinal);
-        const backgroundColors = resultados.map(r => r.tipo === 'PF' ? '#36a2eb' : '#2ecc71'); // Azul y Verde
+        const backgroundColors = resultados.map(r => r.tipo === 'PF' ? '#36a2eb' : '#2ecc71');
         const borderColors = resultados.map(r => r.tipo === 'PF' ? '#36a2eb' : '#2ecc71');
 
         rendimientoGeneralChartInstance = new Chart(ctxGeneral, {
@@ -180,31 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- CARGA DE DATOS INICIAL ---
-    async function cargarDatos() {
-        console.log("Cargando datos iniciales...");
-        try {
-            const versionCache = new Date().getTime();
-            const responseTasas = await fetch('tasas_bancos.json?v=' + versionCache, { cache: 'no-store' });
-            if (!responseTasas.ok) throw new Error(`Error cargando tasas_bancos.json`);
-            tasasBancosData = await responseTasas.json();
-            
-            const responseFci = await fetch('fci_data.json?v=' + versionCache, { cache: 'no-store' });
-            if (!responseFci.ok) throw new Error(`Error cargando fci_data.json`);
-            fciData = await responseFci.json();
-
-            if (tasasBancosData && tasasBancosData.ultima_actualizacion && lastUpdatedP) {
-                const fechaActualizacion = new Date(tasasBancosData.ultima_actualizacion);
-                lastUpdatedP.textContent = `Tasas actualizadas: ${fechaActualizacion.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}`;
-            } else if (lastUpdatedP) {
-                lastUpdatedP.textContent = "Datos listos para calcular.";
-            }
-        } catch (error) {
-            console.error("Error en cargarDatos:", error);
-            if (lastUpdatedP) lastUpdatedP.textContent = `Error al cargar datos.`;
-        }
-    }
-
     // --- EVENT LISTENERS ---
     if (calcularBtn) {
         calcularBtn.addEventListener('click', calcularYMostrarResultados);
@@ -212,5 +212,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Cargar datos al iniciar
     cargarDatos();
-});
 });
