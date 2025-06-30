@@ -1,58 +1,48 @@
-/* --- Reseteo Básico y Fuente --- */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #f4f6f9; /* Gris muy claro de fondo */
+    background-color: #000000; /* Fondo Negro */
     color: #555;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     min-height: 100vh;
     padding: 20px;
 }
-
-/* --- Layout del Dashboard --- */
 .dashboard {
     display: flex;
     gap: 30px;
     width: 100%;
     max-width: 1400px;
-    align-items: flex-start; /* Alinear tarjetas arriba */
+    align-items: flex-start;
 }
-
-/* --- Estilo General de las Tarjetas --- */
 .card {
     background-color: #ffffff;
     border-radius: 15px;
     padding: 30px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
-    transition: all 0.3s ease;
 }
-
 .card-title {
     font-size: 1.5em;
-    color: #2c3e50; /* Gris azulado oscuro */
+    color: #2c3e50;
     margin-bottom: 25px;
     display: flex;
     align-items: center;
     gap: 10px;
 }
-
-/* --- Tarjeta de Configuración (Izquierda) --- */
 .settings-card {
     flex: 1;
     max-width: 380px;
+    position: sticky;
+    top: 20px;
 }
-
 .input-group {
     margin-bottom: 20px;
 }
-
 .input-group label {
     display: block;
     font-weight: 500;
@@ -60,7 +50,6 @@ body {
     color: #34495e;
     font-size: 0.9em;
 }
-
 .input-group input {
     width: 100%;
     padding: 12px;
@@ -70,13 +59,11 @@ body {
     font-family: 'Poppins', sans-serif;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
-
 .input-group input:focus {
     outline: none;
-    border-color: #2ecc71; /* Verde acento */
+    border-color: #2ecc71;
     box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
 }
-
 .checkbox-group {
     display: flex;
     align-items: center;
@@ -84,14 +71,13 @@ body {
     margin-bottom: 25px;
     font-size: 0.9em;
 }
-
 .cta-button {
     width: 100%;
     padding: 15px;
     font-size: 1.1em;
     font-weight: 600;
     color: #fff;
-    background-color: #2ecc71; /* Verde acento */
+    background-color: #2ecc71;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -101,30 +87,24 @@ body {
     justify-content: center;
     gap: 10px;
 }
-
 .cta-button:hover {
-    background-color: #27ae60; /* Verde más oscuro */
+    background-color: #27ae60;
     transform: translateY(-2px);
 }
-
 #last-updated {
     text-align: center;
     font-size: 0.8em;
-    color: #95a5a6; /* Gris claro */
+    color: #95a5a6;
     margin-top: 20px;
 }
-
-/* --- Tarjeta de Resultados (Derecha) --- */
 .results-card {
     flex: 2.5;
 }
-
 .tabs {
     display: flex;
     border-bottom: 1px solid #dfe4ea;
     margin-bottom: 25px;
 }
-
 .tab-link {
     padding: 12px 20px;
     border: none;
@@ -140,16 +120,13 @@ body {
     align-items: center;
     gap: 8px;
 }
-
 .tab-link:hover {
     color: #2c3e50;
 }
-
 .tab-link.active {
-    color: #2ecc71; /* Verde acento */
+    color: #2ecc71;
     font-weight: 600;
 }
-
 .tab-link.active::after {
     content: '';
     position: absolute;
@@ -160,72 +137,59 @@ body {
     background-color: #2ecc71;
     border-radius: 3px;
 }
-
 .tab-content {
     display: none;
 }
-
 .tab-content.active {
     display: block;
     animation: fadeIn 0.5s ease-in-out;
 }
-
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
 .tab-title {
     font-size: 1.3em;
     color: #34495e;
     margin-bottom: 20px;
 }
-
-/* --- Contenedores de Gráfico y Tablas --- */
 .chart-container {
-    height: 350px; /* Altura fija para el gráfico */
+    height: 400px;
     margin-bottom: 30px;
 }
-
 .table-container {
-    max-height: 400px;
+    max-height: 450px;
     overflow-y: auto;
 }
-
 table {
     width: 100%;
     border-collapse: collapse;
 }
-
 th, td {
     padding: 12px 15px;
     text-align: left;
     border-bottom: 1px solid #f0f2f5;
 }
-
 th {
     background-color: #f8f9fa;
     font-weight: 600;
     color: #34495e;
+    position: sticky;
+    top: 0;
 }
-
 tbody tr:hover {
     background-color: #f8f9fa;
 }
-
 td img {
     max-width: 30px;
     vertical-align: middle;
 }
-
-/* --- Resumen de Ganancias --- */
 .resumen-ganancias-style {
     margin-top: 20px;
     padding: 20px;
     background-color: #f8f9fa;
     border-radius: 10px;
 }
-
 .resumen-ganancias-style h4 {
     color: #34495e;
     margin-bottom: 15px;
@@ -234,14 +198,11 @@ td img {
     align-items: center;
     gap: 10px;
 }
-
 .resumen-ganancias-style p {
     margin: 5px 0;
     font-size: 0.95em;
     color: #555;
 }
-
-/* --- Responsividad --- */
 @media (max-width: 1200px) {
     .dashboard {
         flex-direction: column;
@@ -249,5 +210,7 @@ td img {
     }
     .settings-card {
         max-width: 100%;
+        position: static;
     }
+}
 }
