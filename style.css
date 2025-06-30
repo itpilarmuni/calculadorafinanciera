@@ -7,11 +7,11 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #f4f6f9;
+    background-color: #f4f6f9; /* Gris muy claro de fondo */
     color: #555;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Alinear arriba para que no se estire con min-height */
+    align-items: center;
     min-height: 100vh;
     padding: 20px;
 }
@@ -22,7 +22,7 @@ body {
     gap: 30px;
     width: 100%;
     max-width: 1400px;
-    align-items: flex-start;
+    align-items: flex-start; /* Alinear tarjetas arriba */
 }
 
 /* --- Estilo General de las Tarjetas --- */
@@ -36,7 +36,7 @@ body {
 
 .card-title {
     font-size: 1.5em;
-    color: #2c3e50;
+    color: #2c3e50; /* Gris azulado oscuro */
     margin-bottom: 25px;
     display: flex;
     align-items: center;
@@ -47,8 +47,6 @@ body {
 .settings-card {
     flex: 1;
     max-width: 380px;
-    position: sticky; /* Para que se quede fija al hacer scroll */
-    top: 20px;
 }
 
 .input-group {
@@ -75,7 +73,7 @@ body {
 
 .input-group input:focus {
     outline: none;
-    border-color: #2ecc71;
+    border-color: #2ecc71; /* Verde acento */
     box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
 }
 
@@ -93,7 +91,7 @@ body {
     font-size: 1.1em;
     font-weight: 600;
     color: #fff;
-    background-color: #2ecc71;
+    background-color: #2ecc71; /* Verde acento */
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -105,14 +103,14 @@ body {
 }
 
 .cta-button:hover {
-    background-color: #27ae60;
+    background-color: #27ae60; /* Verde más oscuro */
     transform: translateY(-2px);
 }
 
 #last-updated {
     text-align: center;
     font-size: 0.8em;
-    color: #95a5a6;
+    color: #95a5a6; /* Gris claro */
     margin-top: 20px;
 }
 
@@ -148,7 +146,7 @@ body {
 }
 
 .tab-link.active {
-    color: #2ecc71;
+    color: #2ecc71; /* Verde acento */
     font-weight: 600;
 }
 
@@ -185,12 +183,12 @@ body {
 
 /* --- Contenedores de Gráfico y Tablas --- */
 .chart-container {
-    height: 400px;
+    height: 350px; /* Altura fija para el gráfico */
     margin-bottom: 30px;
 }
 
 .table-container {
-    max-height: 450px;
+    max-height: 400px;
     overflow-y: auto;
 }
 
@@ -209,8 +207,6 @@ th {
     background-color: #f8f9fa;
     font-weight: 600;
     color: #34495e;
-    position: sticky;
-    top: 0;
 }
 
 tbody tr:hover {
@@ -253,6 +249,5 @@ td img {
     }
     .settings-card {
         max-width: 100%;
-        position: static; /* Quitar el sticky en pantallas pequeñas */
     }
 }
