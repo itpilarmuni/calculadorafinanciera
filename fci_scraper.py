@@ -1,4 +1,3 @@
-
 import requests
 import json
 
@@ -6,7 +5,6 @@ import json
 URL_API_CAFCI = "https://api.cafci.org.ar/fondo?estado=1&limit=0&include=clase_fondo,ultima_ficha"
 
 # Nombres de las "clases" de los fondos que nos interesan.
-# Usamos el nombre de la clase, que es el identificador único en la API.
 FONDOS_DE_INTERES = {
     "1810 Renta Mixta - Clase A": "Banco Provincia FCI",
     "Alpha Renta Mixta - Clase A": "ICBC Alpha FCI"
@@ -14,12 +12,16 @@ FONDOS_DE_INTERES = {
 
 def fetch_fci_data_from_api():
     """
-    Obtiene los datos de todos los FCI desde la API de CAFCI.
+    Obtiene los datos de todos los FCI desde la API de CAFCI, simulando ser un navegador.
     """
     print(f"[FCI Scraper API] Obteniendo datos desde: {URL_API_CAFCI}")
     try:
-        response = requests.get(URL_API_CAFCI, timeout=60, headers={'User-Agent': 'Mozilla/5.0'})
-        response.raise_for_status()
+        # ===== CAMBIO CLAVE: AÑADIR HEADER PARA EVITAR ERROR 403 =====
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(URL_API_CAFCI, timeout=60, headers=headers)
+        response.raise_for_status() # Esto lanzará un error para respuestas 4xx o 5xx
         return response.json()
     except requests.exceptions.RequestException as e:
         print(f"[FCI Scraper API] Error al conectar con la API de CAFCI: {e}")
@@ -38,7 +40,6 @@ def find_funds_and_extract_performance(api_data):
 
     resultados_fci = []
     
-    # Creamos un diccionario para buscar fondos por el nombre de su clase fácilmente
     funds_by_class_name = {
         clase['nombre']: fondo
         for fondo in api_data['data']
@@ -49,10 +50,8 @@ def find_funds_and_extract_performance(api_data):
         if nombre_clase_cafci in funds_by_class_name:
             fondo_encontrado = funds_by_class_name[nombre_clase_cafci]
             
-            # La API provee rendimientos en la sección 'ultima_ficha'. Buscamos el mensual.
             if 'ultima_ficha' in fondo_encontrado and fondo_encontrado['ultima_ficha']:
                 rendimientos = fondo_encontrado['ultima_ficha'].get('rendimientos', {})
-                # El rendimiento mensual viene en la clave 'mes'
                 rendimiento_mensual_str = rendimientos.get('mes')
 
                 if rendimiento_mensual_str is not None:
