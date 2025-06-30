@@ -290,4 +290,43 @@ document.addEventListener('DOMContentLoaded', () => {
                             label: function(context) {
                                 let label = context.dataset.label || '';
                                 if (label) { label += ': '; }
-                                if (context.parsed.y !== null) label += new Intl.NumberFormat('es-AR
+                                if (context.parsed.y !== null) label += new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(context.parsed.y);
+                                const item = resultados[context.dataIndex];
+                                label += ` (Ganancia: ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(item.interesGanado)})`;
+                                if (item.tipo === 'PF') {
+                                    const bancoData = tasasBancosData.tasas.find(b => b.banco === item.nombre);
+                                    if(bancoData) label += ` (TNA: ${bancoData.tna.toFixed(2)}%)`;
+                                } else if (item.tipo === 'FCI') {
+                                    const fciItem = fciData.find(f => f.nombre === item.nombre);
+                                    if(fciItem) label += ` (Rend. Mensual Est.: ${fciItem.rendimiento_mensual_estimado_pct.toFixed(2)}%)`;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        console.log("[AGGR] Gráfico general renderizado.");
+
+        if (resumenGananciasDiv) {
+            resumenGananciasDiv.innerHTML = '<h3>Detalle de Ganancias (para Plazo Seleccionado):</h3>';
+            resultados.forEach(resultado => {
+                const p = document.createElement('p');
+                const gananciaFormateada = resultado.interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+                p.textContent = `${resultado.nombre} - Total Ganado: ${gananciaFormateada}`;
+                resumenGananciasDiv.appendChild(p);
+            });
+        }
+    }
+
+    // --- EVENT LISTENERS ---
+    if (calcularBtn) {
+        calcularBtn.addEventListener('click', calcularYMostrarResultados);
+    }
+    if (interesSimpleFciCheckbox) {
+        interesSimpleFciCheckbox.addEventListener('change', calcularYMostrarResultados);
+    }
+        
+    cargarDatos();
+});
