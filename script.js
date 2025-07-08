@@ -1,41 +1,83 @@
-// --- Separador de miles en el input ---
-const montoInput = document.getElementById('monto');
-montoInput.addEventListener('input', e => {
-  let digits = e.target.value.replace(/\D/g, '');
-  e.target.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+// ———————————————————
+//  Cálculo de Plazo Fijo
+// ———————————————————
+const pfMontoInput = document.getElementById('pf-monto');
+const pfDiasInput = document.getElementById('pf-dias');
+const pfTasaInput = document.getElementById('pf-tasa');
+const pfResultado = document.getElementById('pf-resultado');
+const pfTotal = document.getElementById('pf-total');
+
+// Función para formatear miles
+function formatThousands(str) {
+  let digits = str.replace(/\D/g, '');
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Aplica formateo cada vez que escribas monto
+pfMontoInput.addEventListener('input', e => {
+  e.target.value = formatThousands(e.target.value);
+  calcPlazoFijo();
 });
 
-// Variables globales para FCI
+// También formatea la tasa (opcional)
+pfTasaInput.addEventListener('input', e => {
+  // cambia coma decimal por punto internamente
+  e.target.value = e.target.value.replace(/[^0-9,]/g, '').replace(',', '.');
+  calcPlazoFijo();
+});
+
+// Cuando cambies días o tasa, recalcula
+pfDiasInput.addEventListener('input', calcPlazoFijo);
+
+function calcPlazoFijo() {
+  const monto = Number(pfMontoInput.value.replace(/\./g, '')) || 0;
+  const dias = Number(pfDiasInput.value) || 0;
+  const tasa = Number(pfTasaInput.value) || 0;
+
+  // Fórmula: interés = monto * tasa_anual/100 * (días/365)
+  const interes = monto * (tasa / 100) * (dias / 365);
+  const total = monto + interes;
+
+  pfResultado.textContent = interes.toFixed(2);
+  pfTotal.textContent = total.toFixed(2);
+}
+
+// ———————————————————
+//  Cálculo de FCI y Gráfico
+// ———————————————————
+const montoInput = document.getElementById('monto');
+const variacionElm = document.getElementById('variacion-fci');
+const resultadoFciElm = document.getElementById('resultado-fci');
 let fciData = null;
 
-// Cargo el JSON generado por el scraper
+// Separador de miles en input FCI
+montoInput.addEventListener('input', e => {
+  e.target.value = formatThousands(e.target.value);
+  calcFciValue();
+});
+
+// Cargo el JSON con datos de FCI
 fetch('fci_data.json')
   .then(r => r.json())
   .then(json => {
     fciData = json;
-    // Muestro variación de los últimos dos días
-    const elmVar = document.getElementById('variacion-fci');
-    elmVar.textContent = json.variacion.toFixed(2) + '%';
-
-    // Una vez cargados los datos, dibujo el gráfico
+    variacionElm.textContent = json.variacion.toFixed(2) + '%';
     drawFciChart(json.historial);
   })
   .catch(err => console.error('Error cargando fci_data.json:', err));
 
-// Cuando cambia el monto, recalculo el valor estimado de hoy
-montoInput.addEventListener('input', () => {
+// Recalcula el valor estimado
+function calcFciValue() {
   if (!fciData) return;
   const importe = Number(montoInput.value.replace(/\./g, '')) || 0;
   const valorHoy = importe * (1 + fciData.variacion / 100);
-  document.getElementById('resultado-fci').textContent =
-    valorHoy.toFixed(2);
-});
+  resultadoFciElm.textContent = valorHoy.toFixed(2);
+}
 
-// Función para dibujar el gráfico de variación diaria en el mes actual
+// Dibuja gráfico de variación diaria del mes actual
 function drawFciChart(historial) {
   const hoy = new Date();
   const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-  // Filtrado de datos desde el primer día del mes
   const dataMes = historial.filter(item =>
     new Date(item.Fecha) >= primerDia
   );
@@ -62,9 +104,7 @@ function drawFciChart(historial) {
     options: {
       responsive: true,
       scales: {
-        y: {
-          ticks: { callback: v => v.toFixed(2) + '%' }
-        }
+        y: { ticks: { callback: v => v.toFixed(2) + '%' } }
       }
     }
   });
