@@ -1,57 +1,36 @@
-* {
-  margin: 0; padding: 0; box-sizing: border-box;
-}
+/* Reset y fuente */
+* { margin:0; padding:0; box-sizing:border-box; }
 body {
-  font-family: 'Poppins', sans-serif;
-  background: #f4f6f9;
-  color: #333;
+  font-family:'Poppins',sans-serif;
+  background:#f4f6f9; color:#333;
 }
 header, footer {
-  background: #004a99;
-  color: #fff;
-  text-align: center;
-  padding: 1rem;
+  background:#004a99; color:#fff; text-align:center; padding:1rem;
 }
-main {
-  max-width: 600px;
-  margin: 2rem auto;
+nav ul {
+  display:flex; list-style:none; background:#eee; padding:.5rem;
 }
-.calc-section {
-  background: #fff;
-  padding: 1rem;
-  margin-bottom: 2rem;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+nav ul li { margin-right:1rem; }
+nav ul li a { text-decoration:none; color:#004a99; font-weight:500; }
+main { max-width:640px; margin:2rem auto; }
+.tab-content {
+  display:none;
+  background:#fff; padding:1.5rem; margin-bottom:2rem;
+  border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
-.calc-section h2 {
-  margin-bottom: 1rem;
-  color: #004a99;
+.tab-content.active { display:block; }
+h2 { color:#004a99; margin-bottom:1rem; }
+.input-group { margin-bottom:1rem; }
+.input-group label { display:block; margin-bottom:.3rem; font-weight:500; }
+.input-group input {
+  width:100%; padding:.5rem; font-size:1rem;
+  border:1px solid #ccc; border-radius:4px;
 }
-.calc-section label {
-  display: block;
-  margin: .5rem 0 .2rem;
-  font-weight: 500;
+.resultado p { margin:.5rem 0; }
+#fci { 
+  background-color:transparent;
+  background-image:url('img/fondo_provincia.png');
+  background-size:cover; background-position:center;
 }
-.calc-section input {
-  width: 100%;
-  padding: .5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.resultado {
-  margin-top: 1rem;
-}
-.resultado p {
-  margin: .4rem 0;
-}
-.fci-section {
-  background-color: transparent;
-  background-image: url('img/fondo_provincia.png');
-  background-size: cover;
-  background-position: center;
-}
-canvas {
-  margin-top: 1rem;
-}
+canvas { margin-top:1rem; }
 
