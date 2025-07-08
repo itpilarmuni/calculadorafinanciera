@@ -18,30 +18,34 @@ def main():
     # 2) Parseo con BeautifulSoup
     soup = BeautifulSoup(resp.text, 'lxml')
     table = soup.find('table', id='listValorCuotaParte')
-    if table is None:
+    if not table:
         print("❌ No encontré la tabla #listValorCuotaParte", file=sys.stderr)
         sys.exit(1)
 
-    # 3) Recorro cada <tr> en <tbody> y extraigo Fecha y Valor
+    # 3) Extraigo encabezados para conocer índices
+    header_cells = table.find('thead').find_all('th')
+    headers = [th.get_text(strip=True) for th in header_cells]
+    # ¿En qué posición está “Valor Cuota Parte”?
+    try:
+        idx_valor = headers.index('Valor Cuota Parte')
+    except ValueError:
+        print(f"❌ No encontré columna 'Valor Cuota Parte' entre {headers}", file=sys.stderr)
+        sys.exit(1)
+
+    # 4) Recorro cada fila del body
     data = []
     for tr in table.find('tbody').find_all('tr'):
         tds = tr.find_all('td')
-        if len(tds) < 2:
-            continue
-
+        # Fecha siempre en la primera celda (índice 0)
         fecha_str = tds[0].get_text(strip=True)
-        valor_str = tds[1].get_text(strip=True)
+        valor_str = tds[idx_valor].get_text(strip=True)
 
-        # 4) Parseo Fecha
-        try:
-            fecha = pd.to_datetime(fecha_str, dayfirst=True, errors='coerce')
-        except Exception:
-            continue
+        # Parseo fecha
+        fecha = pd.to_datetime(fecha_str, dayfirst=True, errors='coerce')
         if pd.isna(fecha):
             continue
 
-        # 5) Limpio el valor: quito puntos de miles y paso coma → punto
-        #    Ej: "1.234,56" → "1234,56" → "1234.56"
+        # Limpio valor: quito miles y convierto coma→punto
         v = valor_str.replace('.', '').replace(',', '.')
         try:
             valor = float(v)
@@ -50,7 +54,7 @@ def main():
 
         data.append({'Fecha': fecha, 'Valor Cuota Parte': valor})
 
-    # 6) Paso a DataFrame, ordeno y reclaro índice
+    # 5) Paso a DataFrame y ordeno
     df = pd.DataFrame(data)
     df = df.sort_values('Fecha').reset_index(drop=True)
 
@@ -58,27 +62,30 @@ def main():
         print("❌ Menos de dos registros válidos tras limpieza", file=sys.stderr)
         sys.exit(1)
 
-    # 7) Calculo variación entre los dos últimos días
+    # 6) Calculo variación entre los dos últimos días
     ult = df.tail(2).reset_index(drop=True)
-    v0 = ult.loc[0, 'Valor Cuota Parte']
-    v1 = ult.loc[1, 'Valor Cuota Parte']
+    v0, v1 = ult.loc[0, 'Valor Cuota Parte'], ult.loc[1, 'Valor Cuota Parte']
     variacion = (v1 - v0) / v0 * 100
 
-    # 8) Preparo el JSON de salida
+    # 7) Armo el JSON
     payload = {
         "historial": [
-            {"Fecha": d.strftime('%Y-%m-%d'),
-             "Valor Cuota Parte": d2}
-            for d, d2 in zip(df['Fecha'], df['Valor Cuota Parte'])
+            {
+              "Fecha": d.strftime('%Y-%m-%d'),
+              "Valor Cuota Parte": float(vp)
+            }
+            for d, vp in zip(df['Fecha'], df['Valor Cuota Parte'])
         ],
-        "variacion": round(variacion, 4)
+        "variacion": round(float(variacion), 4)
     }
 
-    # 9) Guardo en fci_data.json
-    with open('fci_data.json', 'w', encoding='utf-8') as f:
+    # 8) Guardo en disco
+    out_file = 'fci_data.json'
+    with open(out_file, 'w', encoding='utf-8') as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
 
-    print(f"✅ fci_data.json generado: {len(df)} registros, variación = {payload['variacion']}%")
+    print(f"✅ {out_file} generado: {len(df)} registros, variación = {payload['variacion']}%")
 
 if __name__ == '__main__':
     main()
+
