@@ -1,77 +1,103 @@
-// formatea miles: "12345" → "12.345"
+// —————————————————————
+//  Manejo de pestañas (igual que siempre)
+// —————————————————————
+document.querySelectorAll('nav ul li a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = a.getAttribute('href').slice(1);
+    document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+    document.getElementById(target).classList.add('active');
+  });
+});
+// Activa la primera pestaña al cargar
+document.querySelector('nav ul li a').click();
+
+
+// —————————————————————
+//  Funciones auxiliares
+// —————————————————————
 function formatMiles(str) {
   let s = str.replace(/\D/g,'');
   return s.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 }
 
-// ———————————————————
-//  Plazo Fijo
-// ———————————————————
+
+// —————————————————————
+//  Cálculo Plazo Fijo (igual a tu lógica, usando tasas_bancos.json)
+// —————————————————————
 const pfMonto = document.getElementById('pf-monto');
 const pfDias  = document.getElementById('pf-dias');
 const pfTasa  = document.getElementById('pf-tasa');
 const pfInter = document.getElementById('pf-interes');
 const pfTot   = document.getElementById('pf-total');
 
-pfMonto.addEventListener('input', e => {
+let tasasBancos = [];
+fetch('tasas_bancos.json')
+  .then(r=>r.json())
+  .then(json=> {
+    tasasBancos = json;
+    // Si quieres preseleccionar la primera:
+    pfTasa.value = tasasBancos[0].tasa.toString().replace('.',',');
+    calcPF();
+  });
+
+pfMonto.addEventListener('input',e=>{
   e.target.value = formatMiles(e.target.value);
   calcPF();
 });
 pfDias.addEventListener('input', calcPF);
-pfTasa.addEventListener('input', e => {
-  e.target.value = e.target.value.replace(/[^0-9,]/g,'').replace(',','.');
+pfTasa.addEventListener('input', e=>{
+  e.target.value = e.target.value.replace(/[^0-9,]/g,'').replace(',', '.');
   calcPF();
 });
 
-function calcPF() {
-  const monto = Number(pfMonto.value.replace(/\./g,'')) || 0;
-  const dias  = Number(pfDias.value) || 0;
-  const tasa  = Number(pfTasa.value) || 0;
-  const interes = monto * (tasa/100) * (dias/365);
-  const total   = monto + interes;
+function calcPF(){
+  const monto = Number(pfMonto.value.replace(/\./g,''))||0;
+  const dias  = Number(pfDias.value)||0;
+  const tasa  = Number(pfTasa.value.replace(',','.'))||0;
+  const interes = monto*(tasa/100)*(dias/365);
   pfInter.textContent = interes.toFixed(2);
-  pfTot.textContent   = total.toFixed(2);
+  pfTot.textContent   = (monto+interes).toFixed(2);
 }
 
-// ———————————————————
-//  FCI
-// ———————————————————
+
+// —————————————————————
+//  Cálculo FCI + Gráfico
+// —————————————————————
 const fciMonto = document.getElementById('fci-monto');
 const fciVar   = document.getElementById('fci-var');
 const fciVal   = document.getElementById('fci-valor');
 let fciData;
 
-fciMonto.addEventListener('input', e => {
+fciMonto.addEventListener('input', e=>{
   e.target.value = formatMiles(e.target.value);
   calcFCI();
 });
 
-// cargo JSON generado por scraper
 fetch('fci_data.json')
   .then(r=>r.json())
-  .then(j=> {
+  .then(j=>{
     fciData = j;
     fciVar.textContent = j.variacion.toFixed(2) + '%';
-    drawChart(j.historial);
+    drawFCIChart(j.historial);
   });
 
-// calcula valor estimado hoy en base a variación
-function calcFCI() {
+function calcFCI(){
   if(!fciData) return;
-  const imp = Number(fciMonto.value.replace(/\./g,'')) || 0;
-  const val = imp * (1 + fciData.variacion/100);
+  const imp = Number(fciMonto.value.replace(/\./g,''))||0;
+  const val = imp*(1 + fciData.variacion/100);
   fciVal.textContent = val.toFixed(2);
 }
 
-// dibujo gráfico mensual con Chart.js
-function drawChart(hist) {
-  const hoy = new Date(), primerDia = new Date(hoy.getFullYear(), hoy.getMonth(),1);
-  const mes = hist.filter(d=> new Date(d.Fecha)>=primerDia );
+function drawFCIChart(hist){
+  const hoy = new Date(), primer = new Date(hoy.getFullYear(),hoy.getMonth(),1);
+  const mes = hist.filter(d=> new Date(d.Fecha) >= primer);
   const labels = mes.map(d=>d.Fecha);
-  const data   = mes.map((d,i,a)=> i===0?0: ( (d['Valor Cuota Parte']-a[i-1]['Valor Cuota Parte'])/a[i-1]['Valor Cuota Parte'] )*100 );
-  new Chart(document.getElementById('fci-chart'), {
+  const data   = mes.map((d,i,a)=> i===0?0: ((d['Valor Cuota Parte']-a[i-1]['Valor Cuota Parte'])/a[i-1]['Valor Cuota Parte'])*100 );
+  new Chart(document.getElementById('fci-chart'),{
     type:'line',
-    data:{ labels, datasets:[{ label:'% Var diaria', data, fill:false, borderWidth:2, pointRadius:3 }]},
-    options:{ scales:{ y:{ ticks:{ callback:v=>v.toFixed(2)+'%' } }}}
+    data:{labels, datasets:[{label:'% var diaria', data, fill:false, borderWidth:2, pointRadius:3}]},
+    options:{scales:{y:{ticks:{callback:v=>v.toFixed(2)+'%'}}}}
   });
 }
+
