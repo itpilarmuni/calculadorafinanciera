@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Calculadora Financiera</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
+  <!-- Chart.js para FCI -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -12,36 +13,48 @@
     <h1>Calculadora Financiera</h1>
   </header>
 
+  <nav>
+    <!-- Tus enlaces de pestañas originales -->
+    <ul>
+      <li><a href="#pf">Plazo Fijo</a></li>
+      <li><a href="#fci">FCI</a></li>
+    </ul>
+  </nav>
+
   <main>
-    <!-- === Plazo Fijo === -->
-    <section class="calc-section">
+    <!-- ==== Plazo Fijo (sin cambios en estructura) ==== -->
+    <section id="pf" class="tab-content">
       <h2>Plazo Fijo</h2>
-      <label>Importe (ARS):</label>
-      <input id="pf-monto" type="text" placeholder="0" />
-
-      <label>Días:</label>
-      <input id="pf-dias" type="number" placeholder="30" min="1" />
-
-      <label>Tasa anual (%):</label>
-      <input id="pf-tasa" type="text" placeholder="70,50" />
-
+      <div class="input-group">
+        <label for="pf-monto">Importe (ARS):</label>
+        <input id="pf-monto" type="text" placeholder="0"/>
+      </div>
+      <div class="input-group">
+        <label for="pf-dias">Días:</label>
+        <input id="pf-dias" type="number" placeholder="30" min="1"/>
+      </div>
+      <div class="input-group">
+        <label for="pf-tasa">Tasa Anual (%):</label>
+        <!-- Este input ya no se usa si cargas desde tasas_bancos.json -->
+        <input id="pf-tasa" type="text" placeholder="70,50"/>
+      </div>
       <div class="resultado">
-        <p>Interés devengado: <span id="pf-interes">–</span> ARS</p>
-        <p>Monto total: <span id="pf-total">–</span> ARS</p>
+        <p>Interés: <span id="pf-interes">–</span> ARS</p>
+        <p>Total: <span id="pf-total">–</span> ARS</p>
       </div>
     </section>
 
-    <!-- === FCI === -->
-    <section class="calc-section fci-section">
+    <!-- ==== FCI (solo aquí cambió) ==== -->
+    <section id="fci" class="tab-content">
       <h2>Fondo Común de Inversión</h2>
-      <label>Importe (ARS):</label>
-      <input id="fci-monto" type="text" placeholder="0" />
-
+      <div class="input-group">
+        <label for="fci-monto">Importe (ARS):</label>
+        <input id="fci-monto" type="text" placeholder="0"/>
+      </div>
       <div class="resultado">
-        <p>Variación últimos 2 días: <span id="fci-var">–</span></p>
+        <p>Variación (últimos 2 días): <span id="fci-var">–</span></p>
         <p>Valor estimado hoy: <span id="fci-valor">–</span> ARS</p>
       </div>
-
       <canvas id="fci-chart" width="400" height="200"></canvas>
     </section>
   </main>
@@ -53,4 +66,5 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
