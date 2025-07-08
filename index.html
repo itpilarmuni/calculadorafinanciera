@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Calculadora Financiera</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Chart.js para el gráfico de línea -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -14,20 +13,38 @@
   </header>
 
   <main>
-    <!-- Sección de montos -->
-    <section class="calc-section">
-      <label for="monto">Importe:</label>
-      <input id="monto" type="text" placeholder="0" />
+    <!--=== Sección: Plazo Fijo ===-->
+    <section class="pf-section">
+      <h2>Cálculo de Plazo Fijo</h2>
+      <div class="input-group">
+        <label for="pf-monto">Importe (ARS):</label>
+        <input id="pf-monto" type="text" placeholder="0" />
+      </div>
+      <div class="input-group">
+        <label for="pf-dias">Plazo (días):</label>
+        <input id="pf-dias" type="number" placeholder="30" min="1" />
+      </div>
+      <div class="input-group">
+        <label for="pf-tasa">Tasa anual (%):</label>
+        <input id="pf-tasa" type="text" placeholder="70,5" />
+      </div>
+      <div class="resultado">
+        <p>Interés devengado: <strong id="pf-resultado">–</strong> ARS</p>
+        <p>Monto total al vencimiento: <strong id="pf-total">–</strong> ARS</p>
+      </div>
+    </section>
 
+    <!--=== Sección: FCI ===-->
+    <section class="fci-section">
+      <h2>Variación diaria del FCI este mes</h2>
+      <div class="input-group">
+        <label for="monto">Importe (ARS):</label>
+        <input id="monto" type="text" placeholder="0" />
+      </div>
       <div class="resultado">
         <p>Variación FCI (últimos 2 días): <span id="variacion-fci">–</span></p>
         <p>Valor estimado hoy: <span id="resultado-fci">–</span></p>
       </div>
-    </section>
-
-    <!-- Sección FCI con fondo Provincia -->
-    <section class="fci-section">
-      <h2>Variación diaria del FCI este mes</h2>
       <canvas id="chartFci" width="400" height="200"></canvas>
     </section>
   </main>
