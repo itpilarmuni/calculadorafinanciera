@@ -1,10 +1,9 @@
-/* --- Reset básico y tipografía --- */
+/* Reset y tipografía */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
 body {
   font-family: 'Poppins', sans-serif;
   background-color: #f4f6f9;
@@ -13,61 +12,64 @@ body {
   flex-direction: column;
   min-height: 100vh;
 }
-
 header, footer {
   background: #0059b2;
   color: #fff;
   text-align: center;
   padding: 1rem;
 }
-
 main {
   flex: 1;
   padding: 1.5rem;
 }
 
-.calc-section {
+/* Secciones */
+.pf-section, .fci-section {
   background: #fff;
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 2rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
-
-.calc-section label {
-  display: block;
-  margin-bottom: 0.5rem;
-}
-
-.calc-section input {
-  width: 100%;
-  padding: 0.5rem;
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.calc-section .resultado p {
-  margin: 0.5rem 0;
-}
-
-.fci-section {
-  padding: 1rem;
-  border-radius: 8px;
-  /* Fondo transparente + imagen de Provincia */
-  background-color: transparent;
-  background-image: url('img/fondo_provincia.png');
-  background-size: cover;
-  background-position: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.fci-section h2 {
+.pf-section h2, .fci-section h2 {
   color: #0059b2;
   margin-bottom: 1rem;
 }
 
+/* Inputs */
+.input-group {
+  margin-bottom: 1rem;
+}
+.input-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+.input-group input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Resultados */
+.resultado p {
+  margin: 0.5rem 0;
+}
+canvas {
+  margin-top: 1.5rem;
+}
+
+/* Fondo específico FCI */
+.fci-section {
+  background-color: transparent;
+  background-image: url('img/fondo_provincia.png');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Footer */
 footer p {
   font-size: 0.9rem;
 }
