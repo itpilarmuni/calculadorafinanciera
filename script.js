@@ -7,11 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultadosFciBody = document.getElementById('resultadosFci')?.getElementsByTagName('tbody')[0];
     const lastUpdatedP = document.getElementById('last-updated');
     const rendimientoChartCanvasElement = document.getElementById('rendimientoChart');
-    const interesSimpleFciCheckbox = document.getElementById('interesSimpleFciCheckbox'); // Checkbox for simple interest FCI
+    const interesSimpleFciCheckbox = document.getElementById('interesSimpleFciCheckbox');
     const resumenGananciasDiv = document.getElementById('resumenGananciasChart');
     const fciVariacionChartCanvasElement = document.getElementById('fciVariacionChart');
 
     let fciVariacionChart;
+    let rendimientoChart; // Para mantener la instancia del gráfico resumen
 
     // ***** LÓGICA DE PESTAÑAS *****
     const tabLinks = document.querySelectorAll('.tab-link');
@@ -58,20 +59,17 @@ document.addEventListener('DOMContentLoaded', () => {
     montoInput && montoInput.addEventListener('blur', () => formatMonto(montoInput));
 
     // --- FUNCIONES DE CÁLCULO ---
-    // Esta función calculará el interés para FCI, con opción de simple o compuesto
     function calcularInteres(monto, tasaDiariaPorcentual, dias) {
         const isSimpleInterest = interesSimpleFciCheckbox && interesSimpleFciCheckbox.checked;
-        const tasaDiariaDecimal = tasaDiariaPorcentual / 100; // La tasa que viene del scraper ya es diaria porcentual
+        const tasaDiariaDecimal = tasaDiariaPorcentual / 100;
 
         let interesGanado = 0;
         let capitalFinal = parseFloat(monto);
 
         if (isSimpleInterest) {
-            // Cálculo de interés simple para FCI (aplicando la tasa diaria directamente)
             interesGanado = monto * tasaDiariaDecimal * dias;
             capitalFinal = monto + interesGanado;
         } else {
-            // Cálculo de interés compuesto para FCI
             for (let i = 0; i < dias; i++) {
                 capitalFinal *= (1 + tasaDiariaDecimal);
             }
@@ -82,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CARGAR DATOS (Plazos Fijos y FCI) ---
     async function cargarDatos() {
-        // Cargar datos de Plazos Fijos
         try {
             const responsePf = await fetch('tasas_bancos.json');
             const dataPf = await responsePf.json();
@@ -95,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error al cargar datos de plazos fijos:', error);
         }
 
-        // Cargar datos de FCI
         try {
             const responseFci = await fetch('fci_data.json');
             const dataFci = await responseFci.json();
@@ -122,6 +118,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (resultadosFciBody) resultadosFciBody.innerHTML = '';
         if (resumenGananciasDiv) resumenGananciasDiv.innerHTML = '<h4>Resumen de Ganancias Estimadas:</h4>';
 
+        const all_results_for_chart = []; // Collect results for the summary chart
+
+        // Calcular y mostrar resultados de Plazos Fijos
+        if (window.tasasBancosData && resultadosPfBody) {
+            window.tasasBancosData.tasas.forEach(banco => {
+                const tnaDecimal = banco.tna / 100;
+                const tasaDiariaDecimal = tnaDecimal / 365;
+                const interesGanado = monto * tasaDiariaDecimal * dias;
+                const capitalFinal = monto + interesGanado;
+
+                const row = resultadosPfBody.insertRow();
+                row.insertCell().textContent = banco.entidad;
+                row.insertCell().textContent = `${banco.tna.toFixed(2)}%`;
+                row.insertCell().textContent = interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+                row.insertCell().textContent = capitalFinal.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+
+                if (resumenGananciasDiv) {
+                    const p = document.createElement('p');
+                    p.innerHTML = `<strong>${banco.entidad} (Plazo Fijo):</strong> <span style="color: #27ae60;">+ ${interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</span>`;
+                    resumenGananciasDiv.appendChild(p);
+                }
+                all_results_for_chart.push({ name: banco.entidad + ' (PF)', gain: interesGanado });
+            });
+        }
 
         // Calcular y mostrar resultados de FCI (Solo Banco Provincia FCI)
         if (window.fciData && resultadosFciBody) {
@@ -148,6 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     p.innerHTML = `<strong>${bancoProvinciaFCI.nombre}:</strong> <span style="color: #27ae60;">+ ${interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</span>`;
                     resumenGananciasDiv.appendChild(p);
                 }
+                all_results_for_chart.push({ name: bancoProvinciaFCI.nombre, gain: interesGanado });
+
 
                 if (fciVariacionChartCanvasElement && bancoProvinciaFCI.variacion_historica_diaria) {
                     renderFciVariacionChart(bancoProvinciaFCI.variacion_historica_diaria);
@@ -157,26 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Calculation and display for Plazos Fijos
-        if (window.tasasBancosData && resultadosPfBody) {
-            window.tasasBancosData.tasas.forEach(banco => {
-                const tnaDecimal = banco.tna / 100;
-                const tasaDiariaDecimal = tnaDecimal / 365;
-                const interesGanado = monto * tasaDiariaDecimal * dias;
-                const capitalFinal = monto + interesGanado;
-
-                const row = resultadosPfBody.insertRow();
-                row.insertCell().textContent = banco.entidad;
-                row.insertCell().textContent = `${banco.tna.toFixed(2)}%`;
-                row.insertCell().textContent = interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-                row.insertCell().textContent = capitalFinal.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-
-                if (resumenGananciasDiv) {
-                    const p = document.createElement('p');
-                    p.innerHTML = `<strong>${banco.entidad} (Plazo Fijo):</strong> <span style="color: #27ae60;">+ ${interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</span>`;
-                    resumenGananciasDiv.appendChild(p);
-                }
-            });
+        // Render the summary chart after all calculations are done
+        if (rendimientoChartCanvasElement && all_results_for_chart.length > 0) {
+            renderRendimientoChart(all_results_for_chart);
         }
     }
 
@@ -247,6 +252,83 @@ document.addEventListener('DOMContentLoaded', () => {
                         callbacks: {
                             label: function(context) {
                                 return `Variación: ${context.parsed.y.toFixed(4)}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- RENDERIZAR GRÁFICO DE BARRAS DE RENDIMIENTOS COMPARATIVO ---
+    function renderRendimientoChart(allResults) {
+        const ctx = rendimientoChartCanvasElement.getContext('2d');
+
+        // Destroy existing chart if it exists
+        if (rendimientoChart) {
+            rendimientoChart.destroy();
+        }
+
+        // Sort results by gain for better visualization
+        allResults.sort((a, b) => b.gain - a.gain);
+
+        const labels = allResults.map(res => res.name);
+        const data = allResults.map(res => res.gain);
+
+        rendimientoChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Ganancia Estimada (ARS)',
+                    data: data,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Ganancia (ARS)',
+                            font: { family: "'Poppins', sans-serif" }
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                            },
+                            font: { family: "'Poppins', sans-serif" }
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Inversión',
+                            font: { family: "'Poppins', sans-serif" }
+                        },
+                        ticks: {
+                            font: { family: "'Poppins', sans-serif" }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+                                }
+                                return label;
                             }
                         }
                     }
