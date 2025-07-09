@@ -40,10 +40,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FUNCIÓN PARA FORMATEAR MONTO CON PUNTOS DE MILES ---
     function formatMonto(input) {
-        let value = input.value.replace(/\./g, ''); // Remove existing dots
-        value = value.replace(/[^0-9]/g, ''); // Keep only numbers
+        // Eliminar cualquier caracter que no sea número, punto o coma
+        let value = input.value.replace(/[^0-9,.]/g, '');
+        // Eliminar puntos y comas para parsear a flotante puro
+        value = value.replace(/\./g, '').replace(/,/g, '');
+
         if (value) {
-            input.value = parseFloat(value).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0}).replace(/,/g, '.');
+            // Formatear usando Intl.NumberFormat para asegurar puntos de miles y sin decimales
+            input.value = new Intl.NumberFormat('es-AR', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+                useGrouping: true // explícitamente activar la separación de miles
+            }).format(parseFloat(value));
+        } else {
+            input.value = ''; // Limpiar si no hay valor numérico
         }
     }
 
@@ -52,12 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FUNCIONES DE CÁLCULO ---
     function calcularInteres(monto, tasaMensualDecimal, dias) {
-        // La tasaMensualDecimal ahora es en realidad la variación diaria porcentual
-        // Necesitamos ajustarla para que sea una tasa diaria efectiva si se usa para N días
-        // O si es la variación diaria, simplemente la aplicamos para 1 día
-        // Asumiendo que el rendimiento_mensual_estimado_pct ahora es la 'variacion_diaria_pct'
-        // y se aplica día a día.
-        const tasaDiariaDecimal = tasaMensualDecimal / 100; // Ya es diaria, solo convertir a decimal
+        const tasaDiariaDecimal = tasaMensualDecimal / 100;
 
         let interesGanado = 0;
         let capitalFinal = parseFloat(monto);
@@ -100,7 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MOSTRAR RESULTADOS ---
     function calcularYMostrarResultados() {
-        const monto = parseFloat(montoInput.value.replace(/\./g, '')); // Remove thousand separators for calculation
+        // Eliminar puntos y comas del valor del input antes de parsear a flotante
+        const montoString = montoInput.value.replace(/\./g, '').replace(/,/g, '');
+        const monto = parseFloat(montoString);
         const dias = parseInt(diasInput.value, 10);
 
         if (isNaN(monto) || monto <= 0 || isNaN(dias) || dias <= 0) {
