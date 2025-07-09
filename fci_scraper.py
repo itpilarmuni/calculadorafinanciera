@@ -4,6 +4,7 @@ import os
 import time
 import glob
 from datetime import datetime, timedelta, timezone
+import calendar # Importar para obtener días del mes
 
 # Importaciones para Scrapeo HTML (FCI y Plazos Fijos)
 import requests
@@ -25,10 +26,9 @@ def fetch_data_fci_from_html():
     """
     print(f"[FCI Scraper] Obteniendo datos de FCI desde la tabla HTML en: {URL_PROVINCIA_FONDOS}")
     try:
-        # Desactivar advertencias de SSL si es necesario, como en el scraper de BCRA
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         response = requests.get(URL_PROVINCIA_FONDOS, timeout=20, verify=False)
-        response.raise_for_status() # Lanza una excepción para errores HTTP
+        response.raise_for_status()
 
     except requests.exceptions.RequestException as e:
         print(f"[FCI Scraper] Error al obtener la página de Banco Provincia Fondos: {e}")
@@ -41,9 +41,7 @@ def fetch_data_fci_from_html():
         print(f"[FCI Scraper] Error: No se encontró la tabla de FCI con el selector '{TABLE_SELECTOR_FCI}'.")
         return None
 
-    # Leer la tabla HTML directamente con pandas
     try:
-        # pd.read_html devuelve una lista de DataFrames, buscamos la que contenga nuestras columnas clave
         dfs = pd.read_html(str(table), thousands='.', decimal=',')
         df = None
         for temp_df in dfs:
@@ -59,9 +57,7 @@ def fetch_data_fci_from_html():
         col_fecha = 'Fecha'
         col_valor_cuota = 'Valor Cuota Parte'
 
-        # Asegurarse de que las columnas están en el formato correcto (ej: eliminar puntos de miles para parsear a número)
-        # pd.read_html con thousands/decimal debería manejarlo, pero es una doble verificación.
-        if df[col_valor_cuota].dtype == 'object': # Si es string, limpiarla
+        if df[col_valor_cuota].dtype == 'object':
              df[col_valor_cuota] = df[col_valor_cuota].astype(str).str.replace('.', '', regex=False).str.replace(',', '.', regex=False)
              df[col_valor_cuota] = pd.to_numeric(df[col_valor_cuota], errors='coerce')
 
@@ -70,40 +66,71 @@ def fetch_data_fci_from_html():
         df.dropna(subset=[col_fecha, col_valor_cuota], inplace=True)
         df.sort_values(by=col_fecha, inplace=True)
 
-        variacion_diaria_pct = 0
-        if len(df) >= 2:
-            latest_two_days = df.iloc[-2:]
-            valor_cuota_reciente = latest_two_days.iloc[1][col_valor_cuota]
-            valor_cuota_anterior = latest_two_days.iloc[0][col_valor_cuota]
+        # --- Lógica de cálculo de la variación diaria compuesta ---
+        df['Valor Cuota Parte Anterior'] = df[col_valor_cuota].shift(1)
+        df['Dias Transcurridos'] = (df[col_fecha] - df[col_fecha].shift(1)).dt.days
+        
+        def calculate_compounded_daily_variation(row):
+            if pd.notna(row['Valor Cuota Parte Anterior']) and row['Valor Cuota Parte Anterior'] != 0 and row['Dias Transcurridos'] > 0:
+                total_return = (row[col_valor_cuota] / row['Valor Cuota Parte Anterior']) - 1
+                if total_return >= -1:
+                    return ((1 + total_return)**(1/row['Dias Transcurridos']) - 1) * 100
+                else:
+                    return -100.0 # Caída del 100% o más
+            return 0.0
 
-            if valor_cuota_anterior != 0:
-                variacion_diaria_pct = ((valor_cuota_reciente - valor_cuota_anterior) / valor_cuota_anterior) * 100
-            print(f"[FCI Scraper] Variación diaria actual (%): {variacion_diaria_pct:.4f}%")
-        else:
-            print("[FCI Scraper] No hay suficientes datos para calcular la variación diaria actual.")
-
+        df['Variacion Diaria (%)'] = df.apply(calculate_compounded_daily_variation, axis=1)
+        
+        # --- Cálculo de Rendimiento Diario Actual y Rendimiento Mensual Estimado (EXTRAPOLADO) ---
+        rendimiento_diario_actual_pct = 0.0 
+        estimated_monthly_return_pct = 0.0
         chart_data = []
+
         if not df.empty:
+            # Obtener el último valor calculado de Variacion Diaria (%) para rendimiento_diario_actual_pct
+            last_valid_variation = df['Variacion Diaria (%)'].dropna().iloc[-1] if not df['Variacion Diaria (%)'].dropna().empty else 0.0
+            rendimiento_diario_actual_pct = last_valid_variation
+            print(f"[FCI Scraper] Variación diaria compuesta actual (%): {rendimiento_diario_actual_pct:.4f}%")
+
             latest_date_in_data = df[col_fecha].max()
             first_day_of_month = latest_date_in_data.replace(day=1)
             df_current_month = df[df[col_fecha] >= first_day_of_month].copy()
+            
+            # Asegurarse de que 'Variacion Diaria (%)' está limpia para la suma y promedio
+            df_current_month_clean = df_current_month[df_current_month['Variacion Diaria (%)'] != 0].copy()
 
-            df_current_month['Valor Cuota Parte Anterior'] = df_current_month[col_valor_cuota].shift(1)
-            df_current_month['Variacion Diaria (%)'] = df_current_month.apply(
-                lambda row: ((row[col_valor_cuota] - row['Valor Cuota Parte Anterior']) / row['Valor Cuota Parte Anterior']) * 100
-                if pd.notna(row['Valor Cuota Parte Anterior']) and row['Valor Cuota Parte Anterior'] != 0 else 0,
-                axis=1
-            )
+            # Suma de rendimientos diarios MTD
+            sum_daily_returns_mtd = df_current_month_clean['Variacion Diaria (%)'].sum()
+            num_data_points_mtd = df_current_month_clean['Variacion Diaria (%)'].count()
+
+            if num_data_points_mtd > 0:
+                avg_daily_return_mtd = sum_daily_returns_mtd / num_data_points_mtd
+            else:
+                avg_daily_return_mtd = 0.0
+
+            # Calcular días restantes en el mes
+            total_days_in_month = calendar.monthrange(latest_date_in_data.year, latest_date_in_data.month)[1]
+            days_passed_in_month_calendar = latest_date_in_data.day
+            remaining_days_in_month = total_days_in_month - days_passed_in_month_calendar
+
+            # Proyección y suma para el estimado mensual
+            projected_future_returns = avg_daily_return_mtd * remaining_days_in_month
+            estimated_monthly_return_pct = sum_daily_returns_mtd + projected_future_returns
+
+            print(f"[FCI Scraper] Rendimiento mensual estimado (extrapolado) (%): {estimated_monthly_return_pct:.4f}%")
+            
+            # Preparar datos para el gráfico
             chart_data = df_current_month[[col_fecha, 'Variacion Diaria (%)']].dropna().to_dict(orient='records')
             for item in chart_data:
                 item[col_fecha] = item[col_fecha].strftime('%Y-%m-%d')
         else:
-            print("[FCI Scraper] No hay datos para generar el gráfico histórico.")
+            print("[FCI Scraper] No hay datos suficientes para calcular los rendimientos o el gráfico histórico.")
 
         resultados_fci = [{
             "nombre": "Banco Provincia FCI",
-            "logo": "imagenes/PCIA.jpg",
-            "rendimiento_mensual_estimado_pct": variacion_diaria_pct,
+            "logo": "PCIA.jpg",
+            "rendimiento_diario_actual_pct": rendimiento_diario_actual_pct,
+            "rendimiento_mensual_estimado_pct": estimated_monthly_return_pct, # Ahora es el rendimiento mensual EXTRAPOLADO
             "variacion_historica_diaria": chart_data
         }]
         return resultados_fci
@@ -111,6 +138,7 @@ def fetch_data_fci_from_html():
     except Exception as e:
         print(f"[FCI Scraper] Error al procesar la tabla HTML de FCI: {e}")
         return None
+
 
 def fetch_data_bcra():
     """
