@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Financiero | Calculadora de Inversiones</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,56 +18,79 @@
     <main class="dashboard">
         <section class="card settings-card">
             <h2 class="card-title"><i class="fas fa-sliders-h"></i> Configuración</h2>
+            
             <div class="input-group">
                 <label for="monto">Monto a Invertir (ARS)</label>
                 <input type="number" id="monto" placeholder="Ej: 100000" step="1000">
             </div>
+
             <div class="input-group">
                 <label for="dias">Cantidad de Días</label>
                 <input type="number" id="dias" value="30" step="1">
             </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="interesSimpleFciCheckbox">
-                <label for="interesSimpleFciCheckbox">Usar Interés Simple para FCI</label>
-            </div>
-            <button id="calcularBtn" class="cta-button">
-                <i class="fas fa-calculator"></i> Calcular Rendimientos
-            </button>
-            <p id="last-updated">Cargando datos...</p>
+
+            <button id="calcularBtn" class="btn primary-btn"><i class="fas fa-calculator"></i> Calcular</button>
+            <p id="last-updated" class="last-updated">Última actualización: Cargando...</p>
         </section>
 
         <section class="card results-card">
-            <div class="tabs">
-                <button class="tab-link active" data-tab="tab-resumen">
-                    <i class="fas fa-chart-pie"></i> Resumen General
-                </button>
-                <button class="tab-link" data-tab="tab-pf">
-                    <i class="fas fa-university"></i> Plazos Fijos
-                </button>
-                <button class="tab-link" data-tab="tab-fci">
-                    <i class="fas fa-money-bill-wave"></i> FCI
-                </button>
+            <h2 class="card-title"><i class="fas fa-chart-line"></i> Resultados de Inversión</h2>
+            
+            <div class="tab-buttons">
+                <button class="tab-link active" data-tab="tab-pf">Plazos Fijos</button>
+                <button class="tab-link" data-tab="tab-fci">FCI</button>
+                <button class="tab-link" data-tab="tab-resumen">Resumen</button>
             </div>
 
-            <div class="tab-content active" id="tab-resumen">
-                <!-- Contenido Resumen General (sin cambios) -->
-            </div>
-
-            <div class="tab-content" id="tab-pf">
-                <!-- Tabla de Plazos Fijos (sin cambios) -->
+            <div class="tab-content active" id="tab-pf">
+                <h3 class="tab-title">Detalle de Plazos Fijos Bancarios</h3>
+                <div class="table-container">
+                    <table id="resultadosPf">
+                        <thead>
+                            <tr>
+                                <th>Entidad Financiera</th>
+                                <th>TNA (%)</th>
+                                <th>Interés Ganado</th>
+                                <th>Capital + Interés</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="tab-content" id="tab-fci">
                 <h3 class="tab-title">Detalle de Fondos Comunes de Inversión</h3>
-                <div class="input-group">
-                    <label for="fci-monto">Importe (ARS)</label>
-                    <input type="text" id="fci-monto" placeholder="Ej: 100000">
+                 <div class="table-container">
+                    <table id="resultadosFci">
+                        <thead>
+                            <tr>
+                                <th>Logo</th>
+                                <th>Fondo</th>
+                                <th>Rend. Mensual Est. (%)</th>
+                                <th>Interés Ganado</th>
+                                <th>Capital + Interés</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
                 </div>
-                <div class="resultado">
-                    <p>Variación últimos 2 días: <span id="fci-var">–</span></p>
-                    <p>Valor estimado hoy: <span id="fci-valor">–</span> ARS</p>
+                <div class="chart-container">
+                    <h4>Variación Diaria Histórica (Mes Actual)</h4>
+                    <canvas id="fciVariacionChart"></canvas>
                 </div>
-                <canvas id="fci-chart"></canvas>
+            </div>
+
+            <div class="tab-content" id="tab-resumen">
+                <h3 class="tab-title">Gráfico Resumen de Rendimientos</h3>
+                <div class="chart-container">
+                    <canvas id="rendimientoChart"></canvas>
+                </div>
+                <div id="resumenGananciasChart" class="summary-results">
+                    <h4>Resumen de Ganancias Estimadas:</h4>
+                </div>
             </div>
         </section>
     </main>
