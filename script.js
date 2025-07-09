@@ -7,11 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultadosFciBody = document.getElementById('resultadosFci')?.getElementsByTagName('tbody')[0];
     const lastUpdatedP = document.getElementById('last-updated');
     const rendimientoChartCanvasElement = document.getElementById('rendimientoChart');
-    const interesSimpleFciCheckbox = document.getElementById('interesSimpleFciCheckbox');
+    const interesSimpleFciCheckbox = document.getElementById('interesSimpleFciCheckbox'); // Checkbox for simple interest FCI
     const resumenGananciasDiv = document.getElementById('resumenGananciasChart');
-    const fciVariacionChartCanvasElement = document.getElementById('fciVariacionChart'); // New Chart element
+    const fciVariacionChartCanvasElement = document.getElementById('fciVariacionChart');
 
-    let fciVariacionChart; // To hold the Chart instance for FCI variations
+    let fciVariacionChart;
 
     // ***** LÓGICA DE PESTAÑAS *****
     const tabLinks = document.querySelectorAll('.tab-link');
@@ -40,37 +40,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FUNCIÓN PARA FORMATEAR MONTO CON PUNTOS DE MILES ---
     function formatMonto(input) {
-        // Eliminar cualquier caracter que no sea número, punto o coma
         let value = input.value.replace(/[^0-9,.]/g, '');
-        // Eliminar puntos y comas para parsear a flotante puro
         value = value.replace(/\./g, '').replace(/,/g, '');
 
         if (value) {
-            // Formatear usando Intl.NumberFormat para asegurar puntos de miles y sin decimales
             input.value = new Intl.NumberFormat('es-AR', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
-                useGrouping: true // explícitamente activar la separación de miles
+                useGrouping: true
             }).format(parseFloat(value));
         } else {
-            input.value = ''; // Limpiar si no hay valor numérico
+            input.value = '';
         }
     }
 
     montoInput && montoInput.addEventListener('input', () => formatMonto(montoInput));
-    montoInput && montoInput.addEventListener('blur', () => formatMonto(montoInput)); // Format on blur too
+    montoInput && montoInput.addEventListener('blur', () => formatMonto(montoInput));
 
     // --- FUNCIONES DE CÁLCULO ---
-    function calcularInteres(monto, tasaMensualDecimal, dias) {
-        const tasaDiariaDecimal = tasaMensualDecimal / 100;
+    // Esta función calculará el interés para FCI, con opción de simple o compuesto
+    function calcularInteres(monto, tasaDiariaPorcentual, dias) {
+        const isSimpleInterest = interesSimpleFciCheckbox && interesSimpleFciCheckbox.checked;
+        const tasaDiariaDecimal = tasaDiariaPorcentual / 100; // La tasa que viene del scraper ya es diaria porcentual
 
         let interesGanado = 0;
         let capitalFinal = parseFloat(monto);
 
-        for (let i = 0; i < dias; i++) {
-            capitalFinal *= (1 + tasaDiariaDecimal);
+        if (isSimpleInterest) {
+            // Cálculo de interés simple para FCI (aplicando la tasa diaria directamente)
+            interesGanado = monto * tasaDiariaDecimal * dias;
+            capitalFinal = monto + interesGanado;
+        } else {
+            // Cálculo de interés compuesto para FCI
+            for (let i = 0; i < dias; i++) {
+                capitalFinal *= (1 + tasaDiariaDecimal);
+            }
+            interesGanado = capitalFinal - parseFloat(monto);
         }
-        interesGanado = capitalFinal - parseFloat(monto);
         return { interesGanado, capitalFinal };
     }
 
@@ -84,10 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (lastUpdatedP) {
                 lastUpdatedP.textContent = `Última actualización: ${new Date(dataPf.ultima_actualizacion).toLocaleString('es-AR')}`;
             }
-            window.tasasBancosData = dataPf; // Store PF data globally
+            window.tasasBancosData = dataPf;
         } catch (error) {
             console.error('Error al cargar datos de plazos fijos:', error);
-            // Manejar error, quizás mostrar un mensaje al usuario
         }
 
         // Cargar datos de FCI
@@ -95,17 +100,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const responseFci = await fetch('fci_data.json');
             const dataFci = await responseFci.json();
             console.log("Datos de FCI cargados:", dataFci);
-            // Guarda los datos de FCI globalmente o pásalos a la función de cálculo
             window.fciData = dataFci;
         } catch (error) {
             console.error('Error al cargar datos de FCI:', error);
-            window.fciData = []; // Asegurarse de que no sea undefined
+            window.fciData = [];
         }
     }
 
     // --- MOSTRAR RESULTADOS ---
     function calcularYMostrarResultados() {
-        // Eliminar puntos y comas del valor del input antes de parsear a flotante
         const montoString = montoInput.value.replace(/\./g, '').replace(/,/g, '');
         const monto = parseFloat(montoString);
         const dias = parseInt(diasInput.value, 10);
@@ -115,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Limpiar resultados anteriores
         if (resultadosPfBody) resultadosPfBody.innerHTML = '';
         if (resultadosFciBody) resultadosFciBody.innerHTML = '';
         if (resumenGananciasDiv) resumenGananciasDiv.innerHTML = '<h4>Resumen de Ganancias Estimadas:</h4>';
@@ -137,18 +139,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 logoCell.innerHTML = `<img src="${bancoProvinciaFCI.logo}" alt="${bancoProvinciaFCI.nombre}" class="fci-logo">`;
                 nombreCell.textContent = bancoProvinciaFCI.nombre;
-                rendimientoCell.textContent = `${bancoProvinciaFCI.rendimiento_mensual_estimado_pct.toFixed(4)}% Diaria`; // Now it's daily
+                rendimientoCell.textContent = `${bancoProvinciaFCI.rendimiento_mensual_estimado_pct.toFixed(4)}% Diaria`;
                 interesCell.textContent = interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
                 capitalCell.textContent = capitalFinal.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
 
-                // Add to summary
                 if (resumenGananciasDiv) {
                     const p = document.createElement('p');
                     p.innerHTML = `<strong>${bancoProvinciaFCI.nombre}:</strong> <span style="color: #27ae60;">+ ${interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</span>`;
                     resumenGananciasDiv.appendChild(p);
                 }
 
-                // Render FCI Variation Chart
                 if (fciVariacionChartCanvasElement && bancoProvinciaFCI.variacion_historica_diaria) {
                     renderFciVariacionChart(bancoProvinciaFCI.variacion_historica_diaria);
                 }
@@ -157,11 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Calculation and display for Plazos Fijos (remains unchanged as per request)
+        // Calculation and display for Plazos Fijos
         if (window.tasasBancosData && resultadosPfBody) {
             window.tasasBancosData.tasas.forEach(banco => {
                 const tnaDecimal = banco.tna / 100;
-                // Convert TNA to daily rate for simple interest
                 const tasaDiariaDecimal = tnaDecimal / 365;
                 const interesGanado = monto * tasaDiariaDecimal * dias;
                 const capitalFinal = monto + interesGanado;
@@ -172,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 row.insertCell().textContent = interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
                 row.insertCell().textContent = capitalFinal.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
 
-                // Add to summary
                 if (resumenGananciasDiv) {
                     const p = document.createElement('p');
                     p.innerHTML = `<strong>${banco.entidad} (Plazo Fijo):</strong> <span style="color: #27ae60;">+ ${interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</span>`;
@@ -186,12 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderFciVariacionChart(chartData) {
         const ctx = fciVariacionChartCanvasElement.getContext('2d');
 
-        // Destroy existing chart if it exists
         if (fciVariacionChart) {
             fciVariacionChart.destroy();
         }
 
-        // Sort data by date
         chartData.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
 
         const labels = chartData.map(d => d.Fecha);
@@ -214,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 maintainAspectRatio: false,
                 scales: {
                     x: {
-                        type: 'category', // Use 'category' for date strings
+                        type: 'category',
                         title: {
                             display: true,
                             text: 'Fecha',
@@ -233,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         beginAtZero: false,
                         ticks: {
                             callback: function(value) {
-                                return value.toFixed(2) + '%';
+                                return value.toFixed(4) + '%'; // Changed to 4 decimal places for more precision
                             },
                             font: { family: "'Poppins', sans-serif" }
                         }
@@ -259,8 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
     // --- EVENT LISTENERS ---
     calcularBtn && calcularBtn.addEventListener('click', calcularYMostrarResultados);
-    cargarDatos(); // Load initial data
+    cargarDatos();
 });
