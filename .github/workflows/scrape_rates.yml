@@ -1,48 +1,52 @@
-name: Scrape Daily Financial Data
+name: Update FCI Data Daily
 
 on:
   schedule:
-    # Corre todos los días a las 10:00 AM hora Argentina (ART, UTC-3)
-    - cron: '0 13 * * *'
-  workflow_dispatch: # Permite ejecutarlo manualmente
+    - cron: '0 5 * * *' # Ejecuta todos los días a las 05:00 AM UTC (ajusta la hora según tu necesidad)
+  workflow_dispatch: # Permite ejecutar manualmente la acción desde GitHub UI
 
 jobs:
-  scrape_and_commit:
+  update_data:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x' # o '3.9', '3.10', etc.
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Install system dependencies for Chrome
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y chromium-browser # Instalar Chromium para Selenium
 
-      - name: Run Plazo Fijo Scraper
-        run: python "PRUEBA SCRAP.py"
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt # Esto instalará selenium y webdriver-manager
 
-      - name: Run FCI Scraper
-        run: python "fci_scraper.py" # Ejecutar el nuevo script
+    - name: Debug - List files before scraper run
+      run: ls -lR
 
-      - name: Commit and push if data changed
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
-          # Añadir AMBOS archivos JSON al commit
-          git add tasas_bancos.json fci_data.json
-          
-          if git diff --staged --quiet; then
-            echo "No changes to data files to commit."
-          else
-            git commit -m "บอท: Actualización diaria de datos financieros (PF y FCI)"
-            git push
-            echo "Archivos de datos actualizados y subidos al repositorio."
-          fi
+    - name: Run FCI Scraper (Real Web Scrape)
+      run: python fci_scraper.py
+
+    - name: Debug - List files after scraper run
+      run: ls -lR
+
+    - name: Debug - Cat fci_data.json content
+      run: cat fci_data.json || echo "fci_data.json not found or empty"
+      continue-on-error: true # Permite que este paso falle si el archivo no se genera
+
+    - name: Commit and push changes
+      run: |
+        git config user.name 'github-actions[bot]'
+        git config user.email 'github-actions[bot]@users.noreply.github.com'
+        git add fci_data.json
+        git commit -m "Automated: Update FCI data via Selenium scrape" || echo "No changes to commit"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
