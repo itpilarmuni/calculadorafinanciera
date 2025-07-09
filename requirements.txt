@@ -1,7 +1,9 @@
 requests
-beautifulsoup4
-lxml
 pandas
 openpyxl
 selenium
 webdriver-manager
+requests
+beautifulsoup4
+lxml
+urllib3
