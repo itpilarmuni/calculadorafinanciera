@@ -1,4 +1,4 @@
-name: Update FCI Data Daily
+name: Daily Financial Data Update
 
 on:
   schedule:
@@ -26,27 +26,31 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt # Esto instalará selenium y webdriver-manager
+        pip install -r requirements.txt # Esto instalará todas las dependencias (selenium, bs4, etc.)
 
     - name: Debug - List files before scraper run
       run: ls -lR
 
-    - name: Run FCI Scraper (Real Web Scrape)
-      run: python fci_scraper.py
+    - name: Run Combined Financial Data Scraper
+      run: python fci_scraper.py # Ahora este script hace ambos scrapeos
 
     - name: Debug - List files after scraper run
       run: ls -lR
 
     - name: Debug - Cat fci_data.json content
       run: cat fci_data.json || echo "fci_data.json not found or empty"
-      continue-on-error: true # Permite que este paso falle si el archivo no se genera
+      continue-on-error: true
+
+    - name: Debug - Cat tasas_bancos.json content
+      run: cat tasas_bancos.json || echo "tasas_bancos.json not found or empty"
+      continue-on-error: true
 
     - name: Commit and push changes
       run: |
         git config user.name 'github-actions[bot]'
         git config user.email 'github-actions[bot]@users.noreply.github.com'
-        git add fci_data.json
-        git commit -m "Automated: Update FCI data via Selenium scrape" || echo "No changes to commit"
+        git add fci_data.json tasas_bancos.json # Añadir ambos archivos
+        git commit -m "Automated: Update FCI and Fixed Deposit data" || echo "No changes to commit"
         git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
