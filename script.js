@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fciVariacionChartCanvasElement = document.getElementById('fciVariacionChart');
 
     let fciVariacionChart;
-    let rendimientoChart; // Para mantener la instancia del gráfico resumen
+    let rendimientoChart;
 
     // ***** LÓGICA DE PESTAÑAS *****
     const tabLinks = document.querySelectorAll('.tab-link');
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (resultadosFciBody) resultadosFciBody.innerHTML = '';
         if (resumenGananciasDiv) resumenGananciasDiv.innerHTML = '<h4>Resumen de Ganancias Estimadas:</h4>';
 
-        const all_results_for_chart = []; // Collect results for the summary chart
+        const all_results_for_chart = [];
 
         // Calcular y mostrar resultados de Plazos Fijos
         if (window.tasasBancosData && resultadosPfBody) {
@@ -148,18 +148,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const bancoProvinciaFCI = window.fciData.find(fci => fci.nombre === 'Banco Provincia FCI');
 
             if (bancoProvinciaFCI) {
-                const { interesGanado, capitalFinal } = calcularInteres(monto, bancoProvinciaFCI.rendimiento_mensual_estimado_pct, dias);
+                // Usamos rendimiento_diario_actual_pct para el cálculo de interés (la tasa base)
+                // y rendimiento_mensual_estimado_pct para la visualización mensual.
+                const { interesGanado, capitalFinal } = calcularInteres(monto, bancoProvinciaFCI.rendimiento_diario_actual_pct, dias);
 
                 const row = resultadosFciBody.insertRow();
                 const logoCell = row.insertCell();
                 const nombreCell = row.insertCell();
-                const rendimientoCell = row.insertCell();
+                const rendimientoDiarioCell = row.insertCell(); // Celda para Rend. Diario
+                const rendimientoMensualCell = row.insertCell(); // Celda para Rend. Mensual Est.
                 const interesCell = row.insertCell();
                 const capitalCell = row.insertCell();
 
                 logoCell.innerHTML = `<img src="${bancoProvinciaFCI.logo}" alt="${bancoProvinciaFCI.nombre}" class="fci-logo">`;
                 nombreCell.textContent = bancoProvinciaFCI.nombre;
-                rendimientoCell.textContent = `${bancoProvinciaFCI.rendimiento_mensual_estimado_pct.toFixed(4)}% Diaria`;
+                // Mostrar el rendimiento diario en la nueva columna
+                rendimientoDiarioCell.textContent = `${bancoProvinciaFCI.rendimiento_diario_actual_pct.toFixed(4)}%`;
+                // Mostrar el rendimiento mensual en la columna existente
+                rendimientoMensualCell.textContent = `${bancoProvinciaFCI.rendimiento_mensual_estimado_pct.toFixed(4)}%`;
                 interesCell.textContent = interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
                 capitalCell.textContent = capitalFinal.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
 
@@ -179,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Render the summary chart after all calculations are done
         if (rendimientoChartCanvasElement && all_results_for_chart.length > 0) {
             renderRendimientoChart(all_results_for_chart);
         }
@@ -264,12 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderRendimientoChart(allResults) {
         const ctx = rendimientoChartCanvasElement.getContext('2d');
 
-        // Destroy existing chart if it exists
         if (rendimientoChart) {
             rendimientoChart.destroy();
         }
 
-        // Sort results by gain for better visualization
         allResults.sort((a, b) => b.gain - a.gain);
 
         const labels = allResults.map(res => res.name);
