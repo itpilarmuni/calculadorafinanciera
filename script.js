@@ -1,9 +1,4 @@
-# Read the current content of script.js
-with open('script.js', 'r') as f:
-    script_js_content = f.read()
-
-# Modify the content of script.js to re-implement simple interest for FCI
-new_script_js_content = """document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     // --- Referencias a Elementos del DOM ---
     const montoInput = document.getElementById('monto');
     const diasInput = document.getElementById('dias');
@@ -234,7 +229,7 @@ new_script_js_content = """document.addEventListener('DOMContentLoaded', () => {
                         beginAtZero: false,
                         ticks: {
                             callback: function(value) {
-                                return value.toFixed(4) + '%'; // Changed to 4 decimal places for more precision
+                                return value.toFixed(4) + '%';
                             },
                             font: { family: "'Poppins', sans-serif" }
                         }
@@ -264,10 +259,3 @@ new_script_js_content = """document.addEventListener('DOMContentLoaded', () => {
     calcularBtn && calcularBtn.addEventListener('click', calcularYMostrarResultados);
     cargarDatos();
 });
-"""
-
-# Write the modified content back to script.js
-with open('script.js', 'w') as f:
-    f.write(new_script_js_content)
-
-print("`script.js` ha sido modificado para reincorporar la opción de cálculo de interés simple para FCI.")
