@@ -1,8 +1,4 @@
-requests
 pandas
-openpyxl
-selenium
-webdriver-manager
 requests
 beautifulsoup4
 lxml
