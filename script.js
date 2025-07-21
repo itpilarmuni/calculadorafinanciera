@@ -1,5 +1,169 @@
+// Theme toggle functionality
+
+function toggleTheme() {
+    const body = document.body;
+    const themeIcon = document.getElementById('theme-icon');
+    
+    body.classList.toggle('dark');
+    
+    if (body.classList.contains('dark')) {
+        themeIcon.className = 'fas fa-sun';
+        localStorage.setItem('theme', 'dark');
+    } else {
+        themeIcon.className = 'fas fa-moon';
+        localStorage.setItem('theme', 'light');
+    }
+    
+    // Update charts colors when theme changes
+    updateChartsTheme();
+}
+
+function getChartThemeColors() {
+    const styles = getComputedStyle(document.body);
+    return {
+        text: styles.getPropertyValue('--chart-text').trim() || '#1f2937',
+        grid: styles.getPropertyValue('--chart-grid').trim() || '#e5e7eb'
+    };
+}
+
+// Update charts theme colors
+// Update charts theme colors (REEMPLAZO)
+function updateChartsTheme() {
+    const { text, grid } = getChartThemeColors();
+
+    // Rendimiento Chart
+    if (window.rendimientoChart) {
+        const c = window.rendimientoChart;
+        if (c.options?.scales?.x?.ticks) c.options.scales.x.ticks.color = text;
+        if (c.options?.scales?.x?.grid)  c.options.scales.x.grid.color  = grid;
+        if (c.options?.scales?.y?.ticks) c.options.scales.y.ticks.color = text;
+        if (c.options?.scales?.y?.grid)  c.options.scales.y.grid.color  = grid;
+        // Por si en algún momento activás leyenda:
+        if (c.options?.plugins?.legend?.labels) {
+            c.options.plugins.legend.labels.color = text;
+        }
+        c.update();
+    }
+
+    // FCI Variación Chart
+    if (window.fciVariacionChart) {
+        const c = window.fciVariacionChart;
+        if (c.options?.scales?.x?.ticks) c.options.scales.x.ticks.color = text;
+        if (c.options?.scales?.x?.grid)  c.options.scales.x.grid.color  = grid;
+        if (c.options?.scales?.y?.ticks) c.options.scales.y.ticks.color = text;
+        if (c.options?.scales?.y?.grid)  c.options.scales.y.grid.color  = grid;
+        if (c.options?.plugins?.legend?.labels) {
+            c.options.plugins.legend.labels.color = text;
+        }
+        c.update();
+    }
+}
+
+// Load saved theme
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Referencias a Elementos del DOM ---
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark');
+        document.getElementById('theme-icon').className = 'fas fa-sun';
+    }
+});
+
+// Form validation functions
+function showError(inputId, message) {
+    const input = document.getElementById(inputId);
+    const errorDiv = document.getElementById(inputId + '-error');
+    
+    input.classList.add('error');
+    errorDiv.textContent = message;
+    errorDiv.classList.add('show');
+}
+
+function clearError(inputId) {
+    const input = document.getElementById(inputId);
+    const errorDiv = document.getElementById(inputId + '-error');
+    
+    input.classList.remove('error');
+    errorDiv.classList.remove('show');
+    errorDiv.textContent = '';
+}
+
+function clearAllErrors() {
+    clearError('monto');
+    clearError('dias');
+}
+
+function validateForm() {
+    clearAllErrors();
+    let isValid = true;
+
+    const montoInput = document.getElementById('monto');
+    const diasInput = document.getElementById('dias');
+
+    // Validate monto
+    const montoString = montoInput.value.replace(/\./g, '').replace(/,/g, '');
+    const monto = parseFloat(montoString);
+    
+    if (!montoInput.value.trim()) {
+        showError('monto', 'El monto es obligatorio');
+        isValid = false;
+    } else if (isNaN(monto) || monto <= 0) {
+        showError('monto', 'Ingresa un monto válido mayor a 0');
+        isValid = false;
+    } else if (monto < 1000) {
+        showError('monto', 'El monto mínimo es $1.000');
+        isValid = false;
+    }
+
+    // Validate dias
+    const dias = parseInt(diasInput.value, 10);
+    
+    if (!diasInput.value.trim()) {
+        showError('dias', 'Los días son obligatorios');
+        isValid = false;
+    } else if (isNaN(dias) || dias <= 0) {
+        showError('dias', 'Ingresa una cantidad de días válida');
+        isValid = false;
+    } else if (dias > 365) {
+        showError('dias', 'El período máximo es 365 días');
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+// Loading state functions
+function setLoadingState(isLoading) {
+    const calcularBtn = document.getElementById('calcularBtn');
+    const btnText = calcularBtn.querySelector('.btn-text');
+    const btnLoading = calcularBtn.querySelector('.btn-loading');
+    
+    if (isLoading) {
+        calcularBtn.disabled = true;
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'flex';
+    } else {
+        calcularBtn.disabled = false;
+        btnText.style.display = 'flex';
+        btnLoading.style.display = 'none';
+    }
+}
+
+function showResultsCard() {
+    const resultsCard = document.getElementById('results-card');
+    resultsCard.style.display = 'block';
+    resultsCard.classList.add('show');
+
+    // Scroll to results card smoothly
+    setTimeout(() => {
+        resultsCard.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+    }, 100);
+}
+
+// Main application functionality
+document.addEventListener('DOMContentLoaded', () => {
     const montoInput = document.getElementById('monto');
     const diasInput = document.getElementById('dias');
     const calcularBtn = document.getElementById('calcularBtn');
@@ -14,32 +178,33 @@ document.addEventListener('DOMContentLoaded', () => {
     let fciVariacionChart;
     let rendimientoChart;
 
-    // ***** LÓGICA DE PESTAÑAS *****
-    const tabLinks = document.querySelectorAll('.tab-link');
+    // Clear errors on input
+    montoInput.addEventListener('input', () => {
+        clearError('monto');
+        formatMonto(montoInput);
+    });
+    
+    diasInput.addEventListener('input', () => {
+        clearError('dias');
+    });
+
+    // Tab functionality
+    const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
 
-    tabLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            tabLinks.forEach(l => l.classList.remove('active'));
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
             tabContents.forEach(c => c.classList.remove('active'));
 
-            const tabId = link.getAttribute('data-tab');
+            const tabId = btn.getAttribute('data-tab');
             const tabContent = document.getElementById(tabId);
-            link.classList.add('active');
+            btn.classList.add('active');
             if (tabContent) tabContent.classList.add('active');
-            else console.error("No se encontró el contenido de la pestaña para:", tabId);
         });
     });
 
-    // Activar la primera pestaña por defecto al cargar
-    if (tabLinks.length > 0) {
-        tabLinks[0].classList.add('active');
-        if (tabContents.length > 0) {
-            tabContents[0].classList.add('active');
-        }
-    }
-
-    // --- FUNCIÓN PARA FORMATEAR MONTO CON PUNTOS DE MILES ---
+    // Format money input
     function formatMonto(input) {
         let value = input.value.replace(/[^0-9,.]/g, '');
         value = value.replace(/\./g, '').replace(/,/g, '');
@@ -55,10 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    montoInput && montoInput.addEventListener('input', () => formatMonto(montoInput));
     montoInput && montoInput.addEventListener('blur', () => formatMonto(montoInput));
 
-    // --- FUNCIONES DE CÁLCULO ---
+    // Calculate interest
     function calcularInteres(monto, tasaDiariaPorcentual, dias) {
         const isSimpleInterest = interesSimpleFciCheckbox && interesSimpleFciCheckbox.checked;
         const tasaDiariaDecimal = tasaDiariaPorcentual / 100;
@@ -78,12 +242,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return { interesGanado, capitalFinal };
     }
 
-    // --- CARGAR DATOS (Plazos Fijos y FCI) ---
+    // Load data
     async function cargarDatos() {
         try {
             const responsePf = await fetch('tasas_bancos.json');
             const dataPf = await responsePf.json();
-            console.log("Datos de Plazos Fijos cargados:", dataPf);
             if (lastUpdatedP) {
                 lastUpdatedP.textContent = `Última actualización: ${new Date(dataPf.ultima_actualizacion).toLocaleString('es-AR')}`;
             }
@@ -95,7 +258,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const responseFci = await fetch('fci_data.json');
             const dataFci = await responseFci.json();
-            console.log("Datos de FCI cargados:", dataFci);
             window.fciData = dataFci;
         } catch (error) {
             console.error('Error al cargar datos de FCI:', error);
@@ -103,24 +265,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- MOSTRAR RESULTADOS ---
-    function calcularYMostrarResultados() {
+    // Calculate and show results with loading simulation
+    async function calcularYMostrarResultados() {
+        // Validate form first
+        if (!validateForm()) {
+            return;
+        }
+
+        // Start loading state
+        setLoadingState(true);
+
+        // Simulate loading delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
         const montoString = montoInput.value.replace(/\./g, '').replace(/,/g, '');
         const monto = parseFloat(montoString);
         const dias = parseInt(diasInput.value, 10);
 
-        if (isNaN(monto) || monto <= 0 || isNaN(dias) || dias <= 0) {
-            alert('Por favor, ingresa un monto y una cantidad de días válidos.');
-            return;
-        }
-
         if (resultadosPfBody) resultadosPfBody.innerHTML = '';
         if (resultadosFciBody) resultadosFciBody.innerHTML = '';
-        if (resumenGananciasDiv) resumenGananciasDiv.innerHTML = '<h4>Resumen de Ganancias Estimadas:</h4>';
+        if (resumenGananciasDiv) resumenGananciasDiv.innerHTML = '<h4><i class="fas fa-trophy"></i> Resumen de Ganancias Estimadas:</h4>';
 
         const all_results_for_chart = [];
 
-        // Calcular y mostrar resultados de Plazos Fijos
+        // Calculate PF results
         if (window.tasasBancosData && resultadosPfBody) {
             window.tasasBancosData.tasas.forEach(banco => {
                 const tnaDecimal = banco.tna / 100;
@@ -136,63 +304,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (resumenGananciasDiv) {
                     const p = document.createElement('p');
-                    p.innerHTML = `<strong>${banco.entidad} (Plazo Fijo):</strong> <span style="color: #27ae60;">+ ${interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</span>`;
+                    p.innerHTML = `<strong>${banco.entidad} (Plazo Fijo):</strong> <span style="color: var(--success);">+ ${interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</span>`;
                     resumenGananciasDiv.appendChild(p);
                 }
                 all_results_for_chart.push({ name: banco.entidad + ' (PF)', gain: interesGanado });
             });
         }
 
-        // Calcular y mostrar resultados de FCI (Solo Banco Provincia FCI)
+        // Calculate FCI results
         if (window.fciData && resultadosFciBody) {
             const bancoProvinciaFCI = window.fciData.find(fci => fci.nombre === 'Banco Provincia FCI');
 
             if (bancoProvinciaFCI) {
-                // Usamos rendimiento_diario_actual_pct para el cálculo de interés (la tasa base)
-                // y rendimiento_mensual_estimado_pct para la visualización mensual.
                 const { interesGanado, capitalFinal } = calcularInteres(monto, bancoProvinciaFCI.rendimiento_diario_actual_pct, dias);
 
                 const row = resultadosFciBody.insertRow();
                 const logoCell = row.insertCell();
                 const nombreCell = row.insertCell();
-                const rendimientoDiarioCell = row.insertCell(); // Celda para Rend. Diario
-                const rendimientoMensualCell = row.insertCell(); // Celda para Rend. Mensual Est.
+                const rendimientoDiarioCell = row.insertCell();
+                const rendimientoMensualCell = row.insertCell();
                 const interesCell = row.insertCell();
                 const capitalCell = row.insertCell();
 
                 logoCell.innerHTML = `<img src="${bancoProvinciaFCI.logo}" alt="${bancoProvinciaFCI.nombre}" class="fci-logo">`;
                 nombreCell.textContent = bancoProvinciaFCI.nombre;
-                // Mostrar el rendimiento diario en la nueva columna
                 rendimientoDiarioCell.textContent = `${bancoProvinciaFCI.rendimiento_diario_actual_pct.toFixed(4)}%`;
-                // Mostrar el rendimiento mensual en la columna existente
                 rendimientoMensualCell.textContent = `${bancoProvinciaFCI.rendimiento_mensual_estimado_pct.toFixed(4)}%`;
                 interesCell.textContent = interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
                 capitalCell.textContent = capitalFinal.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
 
                 if (resumenGananciasDiv) {
                     const p = document.createElement('p');
-                    p.innerHTML = `<strong>${bancoProvinciaFCI.nombre}:</strong> <span style="color: #27ae60;">+ ${interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</span>`;
+                    p.innerHTML = `<strong>${bancoProvinciaFCI.nombre}:</strong> <span style="color: var(--success);">+ ${interesGanado.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</span>`;
                     resumenGananciasDiv.appendChild(p);
                 }
                 all_results_for_chart.push({ name: bancoProvinciaFCI.nombre, gain: interesGanado });
 
-
                 if (fciVariacionChartCanvasElement && bancoProvinciaFCI.variacion_historica_diaria) {
                     renderFciVariacionChart(bancoProvinciaFCI.variacion_historica_diaria);
                 }
-            } else {
-                console.warn("No se encontró 'Banco Provincia FCI' en los datos.");
             }
         }
 
         if (rendimientoChartCanvasElement && all_results_for_chart.length > 0) {
             renderRendimientoChart(all_results_for_chart);
         }
+
+        // End loading state and show results
+        setLoadingState(false);
+        showResultsCard();
     }
 
-    // --- RENDER FCI VARIATION CHART ---
+    // Render FCI variation chart
     function renderFciVariacionChart(chartData) {
         const ctx = fciVariacionChartCanvasElement.getContext('2d');
+            window.lastFciVariacionChartData = chartData;
+
 
         if (fciVariacionChart) {
             fciVariacionChart.destroy();
@@ -210,64 +377,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 datasets: [{
                     label: 'Variación Diaria (%)',
                     data: data,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1,
-                    fill: false
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    tension: 0.4,
+                    fill: true
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        type: 'category',
-                        title: {
-                            display: true,
-                            text: 'Fecha',
-                            font: { family: "'Poppins', sans-serif" }
-                        },
-                        ticks: {
-                            font: { family: "'Poppins', sans-serif" }
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Variación Diaria (%)',
-                            font: { family: "'Poppins', sans-serif" }
-                        },
-                        beginAtZero: false,
-                        ticks: {
-                            callback: function(value) {
-                                return value.toFixed(4) + '%';
-                            },
-                            font: { family: "'Poppins', sans-serif" }
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: document.body.classList.contains('dark') ? '#f9fafb' : '#1f2937'
                         }
                     }
                 },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            font: { family: "'Poppins', sans-serif" }
+                scales: {
+                    x: {
+                        ticks: {
+                            color: document.body.classList.contains('dark') ? '#f9fafb' : '#1f2937'
+                        },
+                        grid: {
+                            color: document.body.classList.contains('dark') ? '#374151' : '#e5e7eb'
                         }
                     },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `Variación: ${context.parsed.y.toFixed(4)}%`;
-                            }
+                    y: {
+                        ticks: {
+                            color: document.body.classList.contains('dark') ? '#f9fafb' : '#1f2937'
+                        },
+                        grid: {
+                            color: document.body.classList.contains('dark') ? '#374151' : '#e5e7eb'
                         }
                     }
                 }
             }
         });
+        window.fciVariacionChart = fciVariacionChart;
     }
 
-    // --- RENDERIZAR GRÁFICO DE BARRAS DE RENDIMIENTOS COMPARATIVO ---
+    // Render comparison chart
     function renderRendimientoChart(allResults) {
         const ctx = rendimientoChartCanvasElement.getContext('2d');
+            window.lastRendimientoChartData = allResults;
+
 
         if (rendimientoChart) {
             rendimientoChart.destroy();
@@ -285,62 +438,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 datasets: [{
                     label: 'Ganancia Estimada (ARS)',
                     data: data,
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
+                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    borderColor: '#6366f1',
+                    borderWidth: 1,
+                    borderRadius: 8
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Ganancia (ARS)',
-                            font: { family: "'Poppins', sans-serif" }
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return value.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-                            },
-                            font: { family: "'Poppins', sans-serif" }
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Inversión',
-                            font: { family: "'Poppins', sans-serif" }
-                        },
-                        ticks: {
-                            font: { family: "'Poppins', sans-serif" }
-                        }
-                    }
-                },
                 plugins: {
                     legend: {
                         display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: document.body.classList.contains('dark') ? '#f9fafb' : '#1f2937'
+                        },
+                        grid: {
+                            color: document.body.classList.contains('dark') ? '#374151' : '#e5e7eb'
+                        }
                     },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) label += ': ';
-                                if (context.parsed.y !== null) {
-                                    label += context.parsed.y.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-                                }
-                                return label;
-                            }
+                    y: {
+                        ticks: {
+                            color: document.body.classList.contains('dark') ? '#f9fafb' : '#1f2937'
+                        },
+                        grid: {
+                            color: document.body.classList.contains('dark') ? '#374151' : '#e5e7eb'
                         }
                     }
                 }
             }
         });
+        window.rendimientoChart = rendimientoChart;
     }
 
-    // --- EVENT LISTENERS ---
+    // Event listeners
     calcularBtn && calcularBtn.addEventListener('click', calcularYMostrarResultados);
     cargarDatos();
 });

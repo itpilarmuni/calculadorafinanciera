@@ -7,97 +7,130 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-moon" id="theme-icon"></i>
+    </div>
 
-    <main class="dashboard">
-        <section class="card settings-card">
-            <h2 class="card-title"><i class="fas fa-sliders-h"></i> Configuración</h2>
-            
-            <div class="input-group">
-                <label for="monto">Monto a Invertir (ARS)</label>
-                <input type="text" id="monto" placeholder="Ej: 100.000">
-            </div>
+    <div class="container">
+        <header class="header">
+            <h1>Dashboard Financiero</h1>
+            <p>Compara y calcula tus inversiones</p>
+        </header>
 
-            <div class="input-group">
-                <label for="dias">Cantidad de Días</label>
-                <input type="number" id="dias" value="30" step="1">
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="interesSimpleFciCheckbox">
-                <label for="interesSimpleFciCheckbox">Calcular FCI con Interés Simple</label>
-            </div>
-
-            <button id="calcularBtn" class="btn primary-btn"><i class="fas fa-calculator"></i> Calcular</button>
-            <p id="last-updated" class="last-updated">Última actualización: Cargando...</p>
-        </section>
-
-        <section class="card results-card">
-            <h2 class="card-title"><i class="fas fa-chart-line"></i> Resultados de Inversión</h2>
-            
-            <div class="tab-buttons">
-                <button class="tab-link active" data-tab="tab-pf">Plazos Fijos</button>
-                <button class="tab-link" data-tab="tab-fci">FCI</button>
-                <button class="tab-link" data-tab="tab-resumen">Resumen</button>
-            </div>
-
-            <div class="tab-content active" id="tab-pf">
-                <h3 class="tab-title">Detalle de Plazos Fijos Bancarios</h3>
-                <div class="table-container">
-                    <table id="resultadosPf">
-                        <thead>
-                            <tr>
-                                <th>Entidad Financiera</th>
-                                <th>TNA (%)</th>
-                                <th>Interés Ganado</th>
-                                <th>Capital + Interés</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            </tbody>
-                    </table>
+        <main class="dashboard">
+            <section class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-cog"></i>
+                    Configuración de Inversión
+                </h2>
+                
+                <div class="form-group">
+                    <label for="monto" class="form-label">Monto a Invertir (ARS)</label>
+                    <input type="text" id="monto" class="form-input" placeholder="Ej: 100.000">
+                    <div class="error-message" id="monto-error"></div>
                 </div>
-            </div>
 
-            <div class="tab-content" id="tab-fci">
-                <h3 class="tab-title">Detalle de Fondos Comunes de Inversión</h3>
-                 <div class="table-container">
-                    <table id="resultadosFci">
-                        <thead>
-                            <tr>
-                                <th>Logo</th>
-                                <th>Fondo</th>
-                                <th>Rend. Diario (%)</th>  <th>Rend. Mensual Est. (%)</th> <th>Interés Ganado</th>
-                                <th>Capital + Interés</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            </tbody>
-                    </table>
+                <div class="form-group">
+                    <label for="dias" class="form-label">Período de Inversión (días)</label>
+                    <input type="number" id="dias" class="form-input" value="30" step="1" min="1">
+                    <div class="error-message" id="dias-error"></div>
                 </div>
-                <div class="chart-container">
-                    <h4>Variación Diaria Histórica (Mes Actual)</h4>
-                    <canvas id="fciVariacionChart"></canvas>
-                </div>
-            </div>
 
-            <div class="tab-content" id="tab-resumen">
-                <h3 class="tab-title">Gráfico Resumen de Rendimientos</h3>
-                <div class="chart-container">
-                    <canvas id="rendimientoChart"></canvas>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="interesSimpleFciCheckbox">
+                    <label for="interesSimpleFciCheckbox">Usar interés simple para FCI</label>
                 </div>
-                <div id="resumenGananciasChart" class="summary-results">
-                    <h4>Resumen de Ganancias Estimadas:</h4>
+
+                <button id="calcularBtn" class="btn-primary">
+                    <span class="btn-text">
+                        <i class="fas fa-calculator"></i>
+                        Calcular Rendimientos
+                    </span>
+                    <span class="btn-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Calculando...
+                    </span>
+                </button>
+                
+                <p id="last-updated" class="last-updated">Última actualización: Cargando...</p>
+            </section>
+
+            <section class="card results-card" id="results-card" style="display: none;">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-line"></i>
+                    Análisis de Rendimientos
+                </h2>
+                
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="tab-pf">
+                        <i class="fas fa-university"></i>
+                        Plazos Fijos
+                    </button>
+                    <button class="tab-btn" data-tab="tab-fci">
+                        <i class="fas fa-chart-pie"></i>
+                        FCI
+                    </button>
+                    <button class="tab-btn" data-tab="tab-resumen">
+                        <i class="fas fa-chart-bar"></i>
+                        Comparativa
+                    </button>
                 </div>
-            </div>
-        </section>
-    </main>
+
+                <div class="tab-content active" id="tab-pf">
+                    <div class="table-wrapper">
+                        <table id="resultadosPf">
+                            <thead>
+                                <tr>
+                                    <th>Entidad Financiera</th>
+                                    <th>TNA (%)</th>
+                                    <th>Interés Ganado</th>
+                                    <th>Capital + Interés</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-fci">
+                    <div class="table-wrapper">
+                        <table id="resultadosFci">
+                            <thead>
+                                <tr>
+                                    <th>Logo</th>
+                                    <th>Fondo</th>
+                                    <th>Rend. Diario (%)</th>
+                                    <th>Rend. Mensual Est. (%)</th>
+                                    <th>Interés Ganado</th>
+                                    <th>Capital + Interés</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Variación Diaria Histórica</h4>
+                        <canvas id="fciVariacionChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-resumen">
+                    <div class="chart-container">
+                        <canvas id="rendimientoChart"></canvas>
+                    </div>
+                    <div id="resumenGananciasChart" class="summary-section">
+                        <h4><i class="fas fa-trophy"></i> Resumen de Ganancias Estimadas:</h4>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
