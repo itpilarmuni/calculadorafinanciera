@@ -1,5 +1,5 @@
 {
-  "ultima_actualizacion": "2025-08-19T05:12:12.197363+00:00",
+  "ultima_actualizacion": "2025-08-20T05:12:18.589759+00:00",
   "tasas": [
     {
       "entidad": "BANCO DE LA NACION ARGENTINA",
@@ -7,7 +7,7 @@
     },
     {
       "entidad": "BANCO SANTANDER ARGENTINA S.A.",
-      "tna": 35.0
+      "tna": 38.0
     },
     {
       "entidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
@@ -15,11 +15,11 @@
     },
     {
       "entidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
-      "tna": 39.0
+      "tna": 43.0
     },
     {
       "entidad": "BANCO BBVA ARGENTINA S.A.",
-      "tna": 40.0
+      "tna": 43.0
     }
   ]
 }
