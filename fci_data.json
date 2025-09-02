@@ -2,88 +2,12 @@
   {
     "nombre": "Banco Provincia FCI",
     "logo": "PCIA.jpg",
-    "rendimiento_diario_actual_pct": 0.12359391683796073,
-    "rendimiento_mensual_estimado_pct": 2.2728373934800983,
+    "rendimiento_diario_actual_pct": 0.125585855440824,
+    "rendimiento_mensual_estimado_pct": 3.7675756632247204,
     "variacion_historica_diaria": [
       {
-        "Fecha": "2025-08-01",
-        "Variacion Diaria (%)": 0.08194621300303684
-      },
-      {
-        "Fecha": "2025-08-04",
-        "Variacion Diaria (%)": 0.07631604477855713
-      },
-      {
-        "Fecha": "2025-08-05",
-        "Variacion Diaria (%)": 0.0775745319004928
-      },
-      {
-        "Fecha": "2025-08-06",
-        "Variacion Diaria (%)": 0.07734165267878623
-      },
-      {
-        "Fecha": "2025-08-07",
-        "Variacion Diaria (%)": 0.07785256555907782
-      },
-      {
-        "Fecha": "2025-08-08",
-        "Variacion Diaria (%)": 0.08957696286646666
-      },
-      {
-        "Fecha": "2025-08-11",
-        "Variacion Diaria (%)": 0.09957186243612082
-      },
-      {
-        "Fecha": "2025-08-12",
-        "Variacion Diaria (%)": 0.10399528940856495
-      },
-      {
-        "Fecha": "2025-08-13",
-        "Variacion Diaria (%)": 0.10508167998986018
-      },
-      {
-        "Fecha": "2025-08-14",
-        "Variacion Diaria (%)": 0.112077936346755
-      },
-      {
-        "Fecha": "2025-08-18",
-        "Variacion Diaria (%)": 0.12958841516603758
-      },
-      {
-        "Fecha": "2025-08-19",
-        "Variacion Diaria (%)": 0.11285873669633073
-      },
-      {
-        "Fecha": "2025-08-20",
-        "Variacion Diaria (%)": 0.0941987798475985
-      },
-      {
-        "Fecha": "2025-08-21",
-        "Variacion Diaria (%)": 0.08967909042743027
-      },
-      {
-        "Fecha": "2025-08-22",
-        "Variacion Diaria (%)": 0.11551979818391622
-      },
-      {
-        "Fecha": "2025-08-25",
-        "Variacion Diaria (%)": 0.1228916084980547
-      },
-      {
-        "Fecha": "2025-08-26",
-        "Variacion Diaria (%)": 0.12610576717566602
-      },
-      {
-        "Fecha": "2025-08-27",
-        "Variacion Diaria (%)": 0.1266395249493124
-      },
-      {
-        "Fecha": "2025-08-28",
-        "Variacion Diaria (%)": 0.12380543550460921
-      },
-      {
-        "Fecha": "2025-08-29",
-        "Variacion Diaria (%)": 0.12359391683796073
+        "Fecha": "2025-09-01",
+        "Variacion Diaria (%)": 0.125585855440824
       }
     ]
   }
