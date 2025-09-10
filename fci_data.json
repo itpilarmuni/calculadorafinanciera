@@ -2,8 +2,8 @@
   {
     "nombre": "Banco Provincia FCI",
     "logo": "PCIA.jpg",
-    "rendimiento_diario_actual_pct": 0.12874617249434284,
-    "rendimiento_mensual_estimado_pct": 3.5435421274903214,
+    "rendimiento_diario_actual_pct": 0.13479122714725733,
+    "rendimiento_mensual_estimado_pct": 3.576486732152162,
     "variacion_historica_diaria": [
       {
         "Fecha": "2025-09-01",
@@ -28,6 +28,10 @@
       {
         "Fecha": "2025-09-08",
         "Variacion Diaria (%)": 0.12874617249434284
+      },
+      {
+        "Fecha": "2025-09-09",
+        "Variacion Diaria (%)": 0.13479122714725733
       }
     ]
   }
