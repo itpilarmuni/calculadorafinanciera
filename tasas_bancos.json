@@ -1,12 +1,12 @@
 {
-  "ultima_actualizacion": "2025-10-17T05:11:26.019023+00:00",
+  "ultima_actualizacion": "2025-10-18T05:10:59.492874+00:00",
   "tasas": [
     {
       "entidad": "BANCO DE LA NACION ARGENTINA",
-      "tna": 42.0
+      "tna": 44.0
     },
     {
-      "entidad": "BANCO SANTANDER ARGENTINA S.A.",
+      "entidad": "BANCO SANTANDER ARGENTINA SOCIEDAD ANONIMA",
       "tna": 37.0
     },
     {
